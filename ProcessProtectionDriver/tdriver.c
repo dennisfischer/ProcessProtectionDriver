@@ -26,7 +26,7 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	UNICODE_STRING DosDevicesLinkName = RTL_CONSTANT_STRING(TD_DOS_DEVICES_LINK_NAME);
 	PDEVICE_OBJECT Device = NULL;
 	BOOLEAN SymLinkCreated = FALSE;
-	BOOLEAN CreateProcessNotifiySet = FALSE;
+	BOOLEAN CreateProcessNotifyExSet = FALSE;
 
 	NTSTATUS Status;
 	
