@@ -7,7 +7,6 @@
          DbgRaiseAssertionFailure(), FALSE) : \
         TRUE)
 
-
 #define TD_DRIVER_NAME             L"ProcessProtectionDriver"
 #define TD_DRIVER_NAME_WITH_EXT    L"ProcessProtectionDriver.sys"
 

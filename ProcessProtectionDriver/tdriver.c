@@ -26,6 +26,7 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	UNICODE_STRING DosDevicesLinkName = RTL_CONSTANT_STRING(TD_DOS_DEVICES_LINK_NAME);
 	PDEVICE_OBJECT Device = NULL;
 	BOOLEAN SymLinkCreated = FALSE;
+	BOOLEAN CreateProcessNotifiySet = FALSE;
 
 	NTSTATUS Status;
 	
@@ -58,13 +59,21 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 
 	SymLinkCreated = TRUE;
 
-	PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, 0);
+	/*Status = PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, FALSE);
+	if(!NT_SUCCESS(Status))
+	{
+		goto Exit;
+	} else
+	{
+		CreateProcessNotifyExSet = TRUE;
+	}
 	NTSTATUS status = RegisterCallbackFunction();
 	if (!NT_SUCCESS(status))
 	{
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Faild to RegisterCallbackFunction .status : 0x%X \n", status);
+		goto Exit;
 	}
-
+	*/
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver Loaded\n");
 
@@ -73,8 +82,10 @@ Exit:
 
 	if (!NT_SUCCESS(Status))
 	{
-		Status = PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, TRUE);
-		TD_ASSERT(Status == STATUS_SUCCESS);
+		if (CreateProcessNotifyExSet == TRUE) {
+			Status = PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, TRUE);
+			TD_ASSERT(Status == STATUS_SUCCESS);
+		}
 
 		if (SymLinkCreated == TRUE)
 		{
@@ -97,7 +108,7 @@ VOID UnloadRoutine(IN PDRIVER_OBJECT DriverObject)
 {
 	UNREFERENCED_PARAMETER(DriverObject);
 	FreeProcFilter();
-	PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, 1);
+	PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, TRUE);
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
 }
 
