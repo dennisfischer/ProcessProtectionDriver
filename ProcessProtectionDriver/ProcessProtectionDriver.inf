@@ -1,0 +1,51 @@
+; Copyright(C) My Company
+
+[Version]
+Class = "ProcessProtectionDriver"
+Signature = "$WINDOWS NT$"
+Provider = %CompanyName%
+DriverVer = 01/19/2011, 1.0.0.0
+DriverPackageType = KernelModule
+DriverPackageDisplayName = %DriverDesc%
+CatalogFile  = ProcessProtectionDriver.cat
+
+
+[ProcessProtectionDriver_file]
+ProcessProtectionDriver.sys
+
+[DestinationDirs]
+ProcessProtectionDriver_file = 12; system32
+
+[SourceDisksNames]
+1 = %SrcDisk1%
+
+
+[SourceDisksFiles]
+ProcessProtectionDriver.sys = 1
+
+[DefaultInstall]
+CopyFiles = ProcessProtectionDriver_file
+
+[DefaultInstall.Services]
+AddService = %ServiceName%, , driver.Service
+
+[driver.Service]
+DisplayName = %ServiceName%
+Description = %ServiceDesc%
+ServiceBinary = %12%\ProcessProtectionDriver.sys
+ServiceType = 1; SERVICE_KERNEL_DRIVER
+StartType = 3; SERVICE_SYSTEM_START
+ErrorControl = 1; SERVICE_ERROR_NORMAL
+
+[DefaultUninstall]
+DelFiles = ProcessProtectionDriver_file
+
+[DefaultUninstall.Services]
+DelService = %ServiceName%, 0x200
+
+[Strings]
+CompanyName = "My Company Ltd"
+SrcDisk1 = "Source Disk 1"
+ServiceName = "ProcessProtectionDriver"
+ServiceDesc = "ProcessProtectionDriver Service description"
+DriverDesc = "ProcessProtectionDriver Driver description"
