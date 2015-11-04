@@ -3,9 +3,14 @@
 // coded by Behrooz @http://stackoverflow.com/questions/20552300/hook-zwterminateprocess-in-x64-driver-without-ssdt
 // heavily modified to fit purpose of this thesis
 
-VOID CreateProcessNotifyEx(__inout PEPROCESS Process, __in HANDLE ProcessId, __in_opt PPS_CREATE_NOTIFY_INFO CreateInfo)
+VOID CreateProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
 {
 	UNREFERENCED_PARAMETER(Process);
+	//Process exiting
+	if(CreateInfo == NULL)
+	{
+		return;
+	}
 	DbgPrintEx(
 		DPFLTR_IHVDRIVER_ID,
 		DPFLTR_INFO_LEVEL,
@@ -19,47 +24,15 @@ VOID CreateProcessNotifyEx(__inout PEPROCESS Process, __in HANDLE ProcessId, __i
 NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
 	UNREFERENCED_PARAMETER(RegistryPath);
-	//
-	// Create our device object.
-	//
-	UNICODE_STRING NtDeviceName = RTL_CONSTANT_STRING(TD_NT_DEVICE_NAME);
-	UNICODE_STRING DosDevicesLinkName = RTL_CONSTANT_STRING(TD_DOS_DEVICES_LINK_NAME);
-	PDEVICE_OBJECT Device = NULL;
-	BOOLEAN SymLinkCreated = FALSE;
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver start\n");
+
 	BOOLEAN CreateProcessNotifyExSet = FALSE;
 
-	NTSTATUS Status;
+	NTSTATUS Status = STATUS_SUCCESS;
 	
-	Status = IoCreateDevice(
-		DriverObject, // pointer to driver object
-		0, // device extension size
-		&NtDeviceName, // device name
-		FILE_DEVICE_UNKNOWN, // device type
-		0, // device characteristics
-		FALSE, // not exclusive
-		&Device); // returned device object pointer
-
-	if (!NT_SUCCESS(Status))
-	{
-		goto Exit;
-	}
-
-	TD_ASSERT(Device == DriverObject->DeviceObject);
-	DriverObject->MajorFunction[IRP_MJ_CREATE] = TdDeviceCreate;
-	DriverObject->MajorFunction[IRP_MJ_CLOSE] = TdDeviceClose;
-	DriverObject->MajorFunction[IRP_MJ_CLEANUP] = TdDeviceCleanup;
-	DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = TdDeviceControl;
 	DriverObject->DriverUnload = UnloadRoutine;
-	Status = IoCreateSymbolicLink(&DosDevicesLinkName, &NtDeviceName);
 
-	if (!NT_SUCCESS(Status))
-	{
-		goto Exit;
-	}
-
-	SymLinkCreated = TRUE;
-
-	/*Status = PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, FALSE);
+	Status = PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, FALSE);
 	if(!NT_SUCCESS(Status))
 	{
 		goto Exit;
@@ -67,16 +40,17 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	{
 		CreateProcessNotifyExSet = TRUE;
 	}
+	
 	NTSTATUS status = RegisterCallbackFunction();
 	if (!NT_SUCCESS(status))
 	{
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Faild to RegisterCallbackFunction .status : 0x%X \n", status);
 		goto Exit;
 	}
-	*/
+	
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver Loaded\n");
-
+	goto Exit;
 
 Exit:
 
@@ -85,16 +59,6 @@ Exit:
 		if (CreateProcessNotifyExSet == TRUE) {
 			Status = PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, TRUE);
 			TD_ASSERT(Status == STATUS_SUCCESS);
-		}
-
-		if (SymLinkCreated == TRUE)
-		{
-			IoDeleteSymbolicLink(&DosDevicesLinkName);
-		}
-
-		if (Device != NULL)
-		{
-			IoDeleteDevice(Device);
 		}
 	}
 
@@ -261,149 +225,4 @@ LPSTR GetProcessNameFromPid(HANDLE pid)
 		return "pid???";
 	}
 	return (LPSTR)PsGetProcessImageFileName(Process);
-}
-
-
-////////////////////////////////////////////////
-VOID
-TdDeviceUnload(
-	_In_ PDRIVER_OBJECT DriverObject
-)
-{
-	NTSTATUS Status = STATUS_SUCCESS;
-	UNICODE_STRING DosDevicesLinkName = RTL_CONSTANT_STRING(TD_DOS_DEVICES_LINK_NAME);
-
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "ObCallbackTest: TdDeviceUnload\n");
-
-	//
-	// Unregister process notify routines.
-	//
-	Status = PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, TRUE);
-	TD_ASSERT(Status == STATUS_SUCCESS);
-
-	//
-	// Delete the link from our device name to a name in the Win32 namespace.
-	//
-
-	Status = IoDeleteSymbolicLink(&DosDevicesLinkName);
-	if (Status != STATUS_INSUFFICIENT_RESOURCES)
-	{
-		//
-		// IoDeleteSymbolicLink can fail with STATUS_INSUFFICIENT_RESOURCES.
-		//
-
-		TD_ASSERT(NT_SUCCESS(Status));
-	}
-
-
-	//
-	// Delete our device object.
-	//
-
-	IoDeleteDevice(DriverObject->DeviceObject);
-}
-
-//
-// Function:
-//
-//     TdDeviceCreate
-//
-// Description:
-//
-//     This function handles the 'create' irp.
-//
-
-
-NTSTATUS
-TdDeviceCreate(
-	IN PDEVICE_OBJECT DeviceObject,
-	   IN PIRP Irp
-)
-{
-	UNREFERENCED_PARAMETER(DeviceObject);
-
-	Irp->IoStatus.Status = STATUS_SUCCESS ;
-	Irp->IoStatus.Information = 0;
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-	return STATUS_SUCCESS ;
-}
-
-//
-// Function:
-//
-//     TdDeviceClose
-//
-// Description:
-//
-//     This function handles the 'close' irp.
-//
-
-NTSTATUS
-TdDeviceClose(
-	IN PDEVICE_OBJECT DeviceObject,
-	   IN PIRP Irp
-)
-{
-	UNREFERENCED_PARAMETER(DeviceObject);
-
-	Irp->IoStatus.Status = STATUS_SUCCESS ;
-	Irp->IoStatus.Information = 0;
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-	return STATUS_SUCCESS ;
-}
-
-//
-// Function:
-//
-//     TdDeviceCleanup
-//
-// Description:
-//
-//     This function handles the 'cleanup' irp.
-//
-
-NTSTATUS
-TdDeviceCleanup(
-	IN PDEVICE_OBJECT DeviceObject,
-	   IN PIRP Irp
-)
-{
-	UNREFERENCED_PARAMETER(DeviceObject);
-
-	Irp->IoStatus.Status = STATUS_SUCCESS ;
-	Irp->IoStatus.Information = 0;
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-	return STATUS_SUCCESS ;
-}
-
-NTSTATUS
-TdDeviceControl(
-	IN PDEVICE_OBJECT  DeviceObject,
-	IN PIRP  Irp
-	)
-{
-	PIO_STACK_LOCATION IrpStack;
-	ULONG Ioctl;
-	NTSTATUS Status;
-
-	UNREFERENCED_PARAMETER(DeviceObject);
-
-
-	Status = STATUS_SUCCESS;
-
-	IrpStack = IoGetCurrentIrpStackLocation(Irp);
-	Ioctl = IrpStack->Parameters.DeviceIoControl.IoControlCode;
-
-	//
-	// Complete the irp and return.
-	//
-
-	Irp->IoStatus.Status = Status;
-	IoCompleteRequest(Irp, IO_NO_INCREMENT);
-
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "TdDeviceControl leaving - status 0x%x\n", Status);
-	return Status;
 }
