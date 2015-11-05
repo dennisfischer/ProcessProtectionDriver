@@ -100,22 +100,29 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID RegistrationContext, IN  POB
 	}
 
 	LPSTR ProcName = GetProcessNameFromPid(PsGetProcessId(OpenedProcess));
-	if (!_stricmp(ProcName, "chrome.exe"))
+	if (_stricmp(ProcName, "chrome.exe"))
 	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "Not requested onto chrome: %s?\n", ProcName);
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Not requested onto chrome: %s?\n", ProcName);
 		goto Exit;
 	}
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "Requested onto chrome!\n");
-
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Requested onto chrome from: %s!\n", GetProcessNameFromPid(PsGetCurrentProcessId()));
 
 	switch (PreInfo->Operation)
 	{
 		case OB_OPERATION_HANDLE_CREATE:
-		case OB_OPERATION_HANDLE_DUPLICATE:
-			PreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_WRITE | PROCESS_VM_READ | PROCESS_VM_OPERATION);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Requested access is: %x", PreInfo->Parameters->CreateHandleInformation.DesiredAccess);
+			PreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_ALL_ACCESS);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Access changed to: %x", PreInfo->Parameters->CreateHandleInformation.DesiredAccess);
 			break;
-		default: break;
+		case OB_OPERATION_HANDLE_DUPLICATE:
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Requested access is: %x", PreInfo->Parameters->DuplicateHandleInformation.DesiredAccess);
+			PreInfo->Parameters->DuplicateHandleInformation.DesiredAccess &= ~(PROCESS_ALL_ACCESS);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Access changed to: %x", PreInfo->Parameters->DuplicateHandleInformation.DesiredAccess);
+			break;
+		default: 
+			TD_ASSERT(FALSE);
+			break;
 	}
 
 Exit:
