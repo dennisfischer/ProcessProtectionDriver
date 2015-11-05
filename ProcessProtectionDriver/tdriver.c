@@ -85,11 +85,11 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID RegistrationContext, IN  POB
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "PreProcCreateRoutine. \n");
 
 
-	if (PreInfo->KernelHandle != 1)
-	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "Kernel access requested - allow!\n");
-		goto Exit;
-	}
+	//if (PreInfo->KernelHandle != 1)
+	//{
+	//	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "Kernel access requested - allow!\n");
+	//	goto Exit;
+	//}
 
 	PEPROCESS OpenedProcess = (PEPROCESS)PreInfo->Object;
 	PEPROCESS CurrentProcess = PsGetCurrentProcess();
@@ -99,10 +99,20 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID RegistrationContext, IN  POB
 		goto Exit;
 	}
 
-	LPSTR ProcName = GetProcessNameFromPid(PsGetProcessId(OpenedProcess));
-	if (_stricmp(ProcName, "chrome.exe"))
+	LPSTR OpenedProcName= GetProcessNameFromPid(PsGetProcessId(OpenedProcess));
+	LPSTR TargetProcName = GetProcessNameFromPid(PsGetCurrentProcessId());
+
+	//Names don't match
+	if (_stricmp(OpenedProcName, "chrome.exe"))
 	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Not requested onto chrome: %s?\n", ProcName);
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Not requested onto chrome: %s?\n", OpenedProcName);
+		goto Exit;
+	}
+	
+	//Names match (chrome == chrome)
+	if(!_stricmp(TargetProcName, OpenedProcName))
+	{
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Self access: %s -> %s\n", OpenedProcName, TargetProcName);
 		goto Exit;
 	}
 
@@ -111,14 +121,9 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID RegistrationContext, IN  POB
 	switch (PreInfo->Operation)
 	{
 		case OB_OPERATION_HANDLE_CREATE:
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Requested access is: %x", PreInfo->Parameters->CreateHandleInformation.DesiredAccess);
-			PreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_ALL_ACCESS);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Access changed to: %x", PreInfo->Parameters->CreateHandleInformation.DesiredAccess);
-			break;
-		case OB_OPERATION_HANDLE_DUPLICATE:
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Requested access is: %x", PreInfo->Parameters->DuplicateHandleInformation.DesiredAccess);
-			PreInfo->Parameters->DuplicateHandleInformation.DesiredAccess &= ~(PROCESS_ALL_ACCESS);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Access changed to: %x", PreInfo->Parameters->DuplicateHandleInformation.DesiredAccess);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Requested access is: %x\n", PreInfo->Parameters->CreateHandleInformation.DesiredAccess);
+			PreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Access changed to: %x\n", PreInfo->Parameters->CreateHandleInformation.DesiredAccess);
 			break;
 		default: 
 			TD_ASSERT(FALSE);
