@@ -40,9 +40,7 @@ typedef PCHAR (*GET_PROCESS_IMAGE_NAME)(PEPROCESS Process);
 GET_PROCESS_IMAGE_NAME gGetProcessImageFileName;
 
 LPSTR GetProcessNameFromPid(HANDLE pid);
-
-
-
-NTSTATUS PsLookupProcessByProcessId(IN HANDLE ulProcId, OUT PEPROCESS* pEProcess);
-UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
+extern "C" NTSTATUS PsLookupProcessByProcessId(IN HANDLE ulProcId, OUT PEPROCESS* pEProcess);
+extern "C" UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
+extern "C" LONG* NtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS  ProcessInformationClass, PVOID             ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
 #endif 

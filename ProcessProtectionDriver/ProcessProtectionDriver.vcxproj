@@ -160,7 +160,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="tdriver.c">
+    <ClCompile Include="tdriver.cpp">
       <AdditionalIncludeDirectories>;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreCompiledHeaderFile>pch.h</PreCompiledHeaderFile>
       <PreCompiledHeader>Use</PreCompiledHeader>
