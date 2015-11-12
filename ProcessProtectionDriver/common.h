@@ -1,5 +1,4 @@
-#ifndef COMMON_H
-#define COMMON_H
+#pragma once
 #include "pch.h"
 // coded by Behrooz @http://stackoverflow.com/questions/20552300/hook-zwterminateprocess-in-x64-driver-without-ssdt
 
@@ -42,5 +41,4 @@ GET_PROCESS_IMAGE_NAME gGetProcessImageFileName;
 LPSTR GetProcessNameFromPid(HANDLE pid);
 extern "C" NTSTATUS PsLookupProcessByProcessId(IN HANDLE ulProcId, OUT PEPROCESS* pEProcess);
 extern "C" UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
-extern "C" LONG* NtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS  ProcessInformationClass, PVOID             ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength);
-#endif 
+extern "C" LONG* NtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS  ProcessInformationClass, PVOID             ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength); 

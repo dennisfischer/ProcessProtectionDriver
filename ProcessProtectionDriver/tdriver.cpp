@@ -1,85 +1,8 @@
 #include "pch.h"
+#include "ProcessTree.hpp"
 
 // coded by Behrooz @http://stackoverflow.com/questions/20552300/hook-zwterminateprocess-in-x64-driver-without-ssdt
 // heavily modified to fit purpose of this thesis
-
-const int MAX_ENTRIES = 10;
-const int MAX_TREE_ENTRIES = 50;
-int pos = 0;
-long list[10] = {0};
-long chromeTree[MAX_ENTRIES][MAX_TREE_ENTRIES] = {0};
-
-ULONG_PTR GetParentProcessId(HANDLE child) // By Napalm @ NetCore2K
-{
-	PROCESS_BASIC_INFORMATION pbi = PROCESS_BASIC_INFORMATION();
-	ULONG ulSize = 0;
-
-	if (NtQueryInformationProcess(child, ProcessBasicInformation, &pbi, sizeof(pbi), &ulSize) >= 0 && ulSize == sizeof(pbi))
-		
-		return pbi.UniqueProcessId;
-
-	return (ULONG_PTR)-1;
-}
-
-void insertProcessToTree(long pid)
-{
-	for (int i = 0; i < MAX_ENTRIES; i++)
-	{
-		if (chromeTree[i] == 0)
-		{
-			list[i] = pid;
-
-			DbgPrintEx(
-				DPFLTR_IHVDRIVER_ID,
-				DPFLTR_ERROR_LEVEL,
-				"Entries: %d \n",
-				(i + 1)
-			);
-			return;
-		}
-	}
-
-	list[pos++] = pid;
-	for (int i = 0; i < MAX_TREE_ENTRIES; i++)
-	{
-		chromeTree[pos][i] = 0;
-	}
-}
-
-bool addChildProcessToTree(long parentPid, long pid)
-{
-	int position = -1;
-	for (int i = 0; i < MAX_ENTRIES; i++)
-	{
-		if (list[i] == parentPid)
-		{
-			position = i;
-			break;
-		}
-	}
-	//Better expand the tree instead of returning
-	if (position == -1)
-		return false;
-
-	for (int i = 0; i < MAX_TREE_ENTRIES; i++)
-	{
-		if (chromeTree[position][i] == 0)
-		{
-			chromeTree[position][i] = pid;
-
-
-			DbgPrintEx(
-				DPFLTR_IHVDRIVER_ID,
-				DPFLTR_ERROR_LEVEL,
-				"Children: %d \n",
-				(i + 1)
-			);
-			return true;
-		}
-	}
-
-	return false;
-}
 
 VOID CreateProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
 {
@@ -87,6 +10,7 @@ VOID CreateProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIF
 	//Process exiting
 	if (CreateInfo == NULL)
 	{
+		removePidFromTree(HandleToLong(ProcessId));
 		return;
 	}
 
@@ -212,28 +136,12 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID RegistrationContext, IN  POB
 			goto Exit;
 		}
 
-		ULONG_PTR parentHandle = GetParentProcessId(PsGetCurrentProcess());
-		unsigned __int64 pid = parentHandle;
-		if(parentHandle == (ULONG_PTR)-1)
-		{
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Parent PID (%d): %d -> %d\n", pid, PsGetProcessId(OpenedProcess), PsGetCurrentProcessId());
-			goto Exit;
-		}
 
-		for (int i = 0; i < MAX_ENTRIES; i++)
-		{
-			if (list[i] == pid)
-			{
-				for (int j = 0; j < MAX_TREE_ENTRIES; j++)
-				{
-					if (chromeTree[i][j] == HandleToLong(PsGetCurrentProcessId()))
-					{
-						DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Self access: %s -> %s\n", OpenedProcName, TargetProcName);
-						goto Exit;
-					}
-				}
-				break;
-			}
+		//FIND / Compare operation here
+
+		if (findPidInTree(HandleToLong(PsGetCurrentProcessId())) == findPidInTree(HandleToLong(PsGetProcessId(OpenedProcess)))) {
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Self access: %s -> %s\n", OpenedProcName, TargetProcName);
+			goto Exit;
 		}
 
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "UNALLOWED access: %s -> %s\n", OpenedProcName, TargetProcName);

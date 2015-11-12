@@ -1,5 +1,4 @@
-#ifndef TDRIVER_H
-#define TDRIVER_H
+#pragma once
 #include "pch.h"
 #define TD_ASSERT(_exp) \
     ((!(_exp)) ? \
@@ -7,8 +6,6 @@
          DbgRaiseAssertionFailure(), FALSE) : \
         TRUE)
 
-bool addChildProcessToTree(int parentPid, int pid);
-void insertProcessToTree(int pid);
 VOID CreateProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo);
 extern "C" NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 VOID UnloadRoutine(IN PDRIVER_OBJECT DriverObject);
@@ -16,4 +13,3 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID RegistrationContext, IN  POB
 VOID ObjectPostCallback(IN  PVOID RegistrationContext, IN  POB_POST_OPERATION_INFORMATION OperationInformation);
 NTSTATUS RegisterCallbackFunction();
 NTSTATUS FreeProcFilter();
-#endif
