@@ -4,13 +4,28 @@
 // coded by Behrooz @http://stackoverflow.com/questions/20552300/hook-zwterminateprocess-in-x64-driver-without-ssdt
 // heavily modified to fit purpose of this thesis
 
+VOID Lock()
+{
+	KeEnterGuardedRegion();
+	KeAcquireGuardedMutex(&CallbacksMutex);
+}
+
+VOID Unlock()
+{
+	KeReleaseGuardedMutex(&CallbacksMutex);
+	KeLeaveGuardedRegion();
+}
+
 VOID CreateProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo)
 {
 	UNREFERENCED_PARAMETER(Process);
+
 	//Process exiting
 	if (CreateInfo == NULL)
 	{
+		Lock();
 		removePidFromTree(HandleToLong(ProcessId));
+		Unlock();
 		return;
 	}
 
@@ -18,11 +33,15 @@ VOID CreateProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIF
 	{
 		if (!_stricmp(GetProcessNameFromPid(CreateInfo->ParentProcessId), "chrome.exe"))
 		{
+			Lock();
 			addChildProcessToTree(HandleToLong(CreateInfo->ParentProcessId), HandleToLong(ProcessId));
+			Unlock();
 		}
 		else
 		{
+			Lock();
 			insertProcessToTree(HandleToLong(ProcessId));
+			Unlock();
 		}
 
 		DbgPrintEx(
@@ -46,6 +65,9 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	NTSTATUS Status = STATUS_SUCCESS;
 
 	DriverObject->DriverUnload = UnloadRoutine;
+
+	//Initialize a mutex object so both callbacks don't create any weird race conditions and possibly bsods.
+	KeInitializeGuardedMutex(&CallbacksMutex);
 
 	Status = PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, FALSE);
 	if (!NT_SUCCESS(Status))
@@ -138,12 +160,13 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID RegistrationContext, IN  POB
 
 
 		//FIND / Compare operation here
-
+		Lock();
 		if (findPidInTree(HandleToLong(PsGetCurrentProcessId())) == findPidInTree(HandleToLong(PsGetProcessId(OpenedProcess)))) {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Self access: %s -> %s\n", OpenedProcName, TargetProcName);
+			Unlock();
 			goto Exit;
 		}
-
+		Unlock();
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "UNALLOWED access: %s -> %s\n", OpenedProcName, TargetProcName);
 
 	}
@@ -154,7 +177,7 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID RegistrationContext, IN  POB
 	{
 		case OB_OPERATION_HANDLE_CREATE:
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Requested access is: %x\n", PreInfo->Parameters->CreateHandleInformation.DesiredAccess);
-			PreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ);
+			PreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_WRITE);
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Access changed to: %x\n", PreInfo->Parameters->CreateHandleInformation.DesiredAccess);
 			break;
 		default:

@@ -6,6 +6,7 @@
          DbgRaiseAssertionFailure(), FALSE) : \
         TRUE)
 
+KGUARDED_MUTEX CallbacksMutex;
 VOID CreateProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIFY_INFO CreateInfo);
 extern "C" NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath);
 VOID UnloadRoutine(IN PDRIVER_OBJECT DriverObject);

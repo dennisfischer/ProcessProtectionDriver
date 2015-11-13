@@ -2,8 +2,8 @@
 const int MAX_ENTRIES = 10;
 const int MAX_TREE_ENTRIES = 50;
 int pos = 0;
-long list[10] = { 0 };
-long chromeTree[MAX_TREE_ENTRIES] = { 0 };
+long list[MAX_ENTRIES] = { 0 };
+long chromeTree[MAX_ENTRIES * MAX_TREE_ENTRIES] = { 0 };
 
 bool addChildProcessToTree(long parentPid, long pid);
 void insertProcessToTree(long pid);
