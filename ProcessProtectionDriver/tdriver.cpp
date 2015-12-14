@@ -55,12 +55,32 @@ VOID CreateProcessNotifyEx(PEPROCESS Process, HANDLE ProcessId, PPS_CREATE_NOTIF
 	}
 }
 
+VOID ImageLoadNotify (	IN PUNICODE_STRING FullImageName,	IN HANDLE ProcessId,  	IN PIMAGE_INFO ImageInfo	)
+{
+	UNREFERENCED_PARAMETER(ImageInfo);
+	Lock();
+
+	if (FullImageName != nullptr && FullImageName->Length > 0 && wcsstr(FullImageName->Buffer, L"dll-injector-sample.dll")) {
+		DbgPrintEx(
+			DPFLTR_IHVDRIVER_ID,
+			DPFLTR_ERROR_LEVEL,
+			"PID : %d (%d)  ImageName :%wZ\n",
+			ProcessId, FullImageName,
+			FullImageName
+			);
+
+		ZwUnmapViewOfSection(ProcessId, ImageInfo->ImageBase);
+	}
+	Unlock();
+}
+
 NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING RegistryPath)
 {
 	UNREFERENCED_PARAMETER(RegistryPath);
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver start\n");
 
 	BOOLEAN CreateProcessNotifyExSet = FALSE;
+	BOOLEAN LoadImageNotifyRoutineSet = FALSE;
 
 	NTSTATUS Status = STATUS_SUCCESS;
 
@@ -78,6 +98,16 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT DriverObject, IN PUNICODE_STRING Registry
 	{
 		CreateProcessNotifyExSet = TRUE;
 	}
+
+	Status = PsSetLoadImageNotifyRoutine(ImageLoadNotify);
+	if(!NT_SUCCESS(Status))
+	{
+		goto Exit;
+	} else
+	{
+		LoadImageNotifyRoutineSet = TRUE;
+	}
+
 
 	NTSTATUS status = RegisterCallbackFunction();
 	if (!NT_SUCCESS(status))
@@ -97,6 +127,12 @@ Exit:
 		if (CreateProcessNotifyExSet == TRUE)
 		{
 			Status = PsSetCreateProcessNotifyRoutineEx(CreateProcessNotifyEx, TRUE);
+			TD_ASSERT(Status == STATUS_SUCCESS);
+		}
+
+		if(LoadImageNotifyRoutineSet == TRUE)
+		{
+			Status = PsRemoveLoadImageNotifyRoutine(ImageLoadNotify);
 			TD_ASSERT(Status == STATUS_SUCCESS);
 		}
 	}
