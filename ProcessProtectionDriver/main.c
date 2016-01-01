@@ -7,6 +7,9 @@
 NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegistryPath);
 VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject);
 
+VOID Initalize();
+VOID Shutdown();
+
 NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegistryPath)
 {
 	UNREFERENCED_PARAMETER(InRegistryPath);
@@ -15,18 +18,13 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegi
 	BOOLEAN CreateProcessNotifyExSet = FALSE;
 	BOOLEAN LoadImageNotifyRoutineSet = FALSE;
 	BOOLEAN WriteProcessMemoryCallbackRoutineSet = FALSE;
-	NTSTATUS Status;
-
+	NTSTATUS Status = STATUS_SUCCESS;
 
 	InDriverObject->DriverUnload = UnloadRoutine;
 
-	//Initialize a mutex object so both callbacks don't create any weird race conditions and possibly bsods.
-	GlobalMutex = AllocMemory(1, sizeof(KGUARDED_MUTEX));
-	KeInitializeGuardedMutex(GlobalMutex);
+	Initalize();
 
-	InitializePTree();
-
-	if (!NT_SUCCESS(Status = PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, FALSE)))
+	/*if (!NT_SUCCESS(Status = PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, FALSE)))
 	{
 		goto ERROR_ABORT;
 	}
@@ -44,11 +42,16 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegi
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Faild to RegisterCallbackFunction .status : 0x%X \n", Status);
 		goto ERROR_ABORT;
 	}
-	WriteProcessMemoryCallbackRoutineSet = TRUE;
+	WriteProcessMemoryCallbackRoutineSet = TRUE;*/
 
+	if(FALSE)
+	{
+		goto ERROR_ABORT;
+	}
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver Loaded\n");
-	goto ERROR_ABORT;
+
+	return STATUS_SUCCESS;
 
 ERROR_ABORT:
 
@@ -69,8 +72,7 @@ ERROR_ABORT:
 		FreeOBCallback();
 	}
 
-	DestroyPTree();
-	FreeMemory(GlobalMutex);
+	Shutdown();
 	return Status;
 }
 
@@ -80,13 +82,27 @@ ERROR_ABORT:
 VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 {
 	UNREFERENCED_PARAMETER(InDriverObject);
-
+	/*
 	FreeOBCallback();
 	PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
+	*/
+	Shutdown();
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
+}
+
+VOID Initalize()
+{
+	//Initialize a mutex object so both callbacks don't create any weird race conditions and possibly bsods.
+	GlobalMutex = AllocMemory(1, sizeof(KGUARDED_MUTEX));
+	KeInitializeGuardedMutex(GlobalMutex);
+	InitializePTree();
+}
+
+VOID Shutdown()
+{
 	DestroyPTree();
 	if (IsValidPointer(GlobalMutex)) {
 		FreeMemory(GlobalMutex);
 	}
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
 }
