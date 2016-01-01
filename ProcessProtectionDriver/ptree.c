@@ -1,125 +1,171 @@
 #include "stdafx.h"
 
-int MAX_ENTRIES = 10;
-int MAX_TREE_ENTRIES = 50;
-int pos = 0;
-long* list;
-long* chromeTree;
+PLIST_ENTRY	PListHead;
 
-void InitializePTree()
+VOID InitializePTree()
 {
-	list = AllocMemory(1, sizeof(long) * MAX_ENTRIES);
-	chromeTree = AllocMemory(1, sizeof(long) * MAX_ENTRIES * MAX_TREE_ENTRIES);
+	PListHead = AllocMemory(1, sizeof(LIST_ENTRY));
+	InitializeListHead(PListHead);
 }
 
-void DestroyPTree()
+VOID RemoveChildren(PPROCESS_LIST_ENTRY entry)
 {
-	if (IsValidPointer(list)) {
-		FreeMemory(list);
-	}
-	if (IsValidPointer(list)) {
-		FreeMemory(chromeTree);
-	}
-}
-
-void insertProcessToTree(long InPid)
-{
-	for (int i = 0; i < MAX_ENTRIES; i++)
+	PLIST_ENTRY childHead = entry->ChildHead;
+	PLIST_ENTRY child = childHead;
+	while (childHead != child->Flink)
 	{
-		if (list[i] == 0)
-		{
-			list[i] = InPid;
+		child = child->Flink;
+		PPROCESS_LIST_ENTRY_CHILD record = CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry);
+		RemoveEntryList(child);
+		FreeMemory(record);
+	}
 
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Entries: %d \n", (i + 1));
+	FreeMemory(entry->ChildHead);
+}
+
+VOID DestroyPTree()
+{
+	PLIST_ENTRY entry = PListHead;
+	while (PListHead != entry->Flink)
+	{
+		entry = entry->Flink;
+		PPROCESS_LIST_ENTRY record = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry);
+		RemoveChildren(record);
+		RemoveEntryList(entry);
+		FreeMemory(record);
+	}
+
+	FreeMemory(PListHead);
+}
+
+//Inserts a new parent pid
+VOID InsertPidToTree(ULONG InPid)
+{
+	//Check if tree already contains parent and return
+	PLIST_ENTRY entry = PListHead;
+	while (PListHead != entry->Flink)
+	{
+		entry = entry->Flink;
+		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InPid)
+		{
 			return;
 		}
 	}
 
-	list[pos++] = InPid;
-	for (int i = pos*MAX_ENTRIES; i < pos*MAX_ENTRIES + MAX_TREE_ENTRIES; i++)
-	{
-		chromeTree[i] = 0;
-	}
+	//Otherwise add new parent list entry
+	PPROCESS_LIST_ENTRY newEntry = AllocMemory(TRUE, sizeof(PROCESS_LIST_ENTRY));
+	newEntry->Pid = InPid;
+	newEntry->ChildHead = AllocMemory(TRUE, sizeof(LIST_ENTRY));
+	InitializeListHead(newEntry->ChildHead);
+	InsertHeadList(PListHead, &(newEntry->ListEntry));
 }
 
-BOOLEAN addChildProcessToTree(long InParentPid, long InChildPid)
+//Adds a child pid to an existing parent pid entry
+VOID AddChildPidToTree(ULONG InParentPid, ULONG InChildPid)
 {
-	int position = -1;
-	for (int i = 0; i < MAX_ENTRIES; i++)
+	//First find parent
+	PLIST_ENTRY entry = PListHead;
+	while (PListHead != entry->Flink)
 	{
-		if (list[i] == InParentPid)
+		entry = entry->Flink;
+
+		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InParentPid)
 		{
-			position = i;
-			break;
-		}
-	}
-	//Better expand the tree instead of returning
-	if (position == -1)
-		return FALSE;
-
-	for (int i = position * MAX_TREE_ENTRIES; i < position * MAX_TREE_ENTRIES + MAX_TREE_ENTRIES; i++)
-	{
-		if (chromeTree[i] == 0)
-		{
-			chromeTree[i] = InChildPid;
-
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Children: %d \n", (i + 1));
-			return TRUE;
-		}
-	}
-
-	return FALSE;
-}
-
-void removePidFromTree(long InPid)
-{
-	int position = -1;
-	for (int i = 0; i < MAX_ENTRIES; i++)
-	{
-		if (list[i] == InPid)
-		{
-			position = i;
-			list[i] = 0;
-		}
-	}
-
-	if (position == -1) {
-		for (int i = 0; i < MAX_ENTRIES * MAX_TREE_ENTRIES; i++)
-		{
-			if (chromeTree[i] == InPid)
+			//Check if child already exists
+			PLIST_ENTRY childHead = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->ChildHead;
+			PLIST_ENTRY child = childHead;
+			while (childHead != child->Flink)
 			{
-				chromeTree[i] = 0;
+				if (CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->Pid == InChildPid)
+				{
+					return;
+				}
+			}
+
+			//Add new child otherwise
+			PPROCESS_LIST_ENTRY_CHILD newEntry = AllocMemory(TRUE, sizeof(PROCESS_LIST_ENTRY_CHILD));
+			newEntry->Pid = InChildPid;
+			newEntry->ParentPid = InParentPid;
+			InsertHeadList(childHead, &(newEntry->ListEntry));
+		}
+	}
+}
+
+//Finds and removes PID from tree
+VOID RemovePidFromTree(ULONG InPid)
+{
+	//First, quickly check parents
+	PLIST_ENTRY entry = PListHead;
+	while (PListHead != entry->Flink)
+	{
+		entry = entry->Flink;
+
+		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InPid)
+		{
+			//Found, remove parent + children
+			PPROCESS_LIST_ENTRY record = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry);
+			RemoveChildren(record);
+			RemoveEntryList(entry);
+			FreeMemory(record);
+			return;
+		}
+	}
+
+
+	//If not found, check children of all parents
+	entry = PListHead;
+	while (PListHead != entry->Flink)
+	{
+		entry = entry->Flink;
+
+		PLIST_ENTRY childHead = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->ChildHead;
+		PLIST_ENTRY child = childHead;
+		while (childHead != child->Flink)
+		{
+			if (CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->Pid == InPid)
+			{
+				PPROCESS_LIST_ENTRY_CHILD record = CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry);
+
+				//Just remove child
+				RemoveEntryList(child);
+				FreeMemory(record);
+				return;
 			}
 		}
 	}
-	else
-	{
-		for (int i = position * MAX_TREE_ENTRIES; i < position*MAX_TREE_ENTRIES + MAX_TREE_ENTRIES; i++)
-		{
-			chromeTree[i] = 0;
-		}
-	}
 }
 
-int findPidInTree(long InPid)
+//Finds PID inside the tree
+ULONG FindPidInTree(ULONG InPid)
 {
-	for (int i = 0; i < MAX_ENTRIES; i++)
+	//First, quickly check parents
+	PLIST_ENTRY entry = PListHead;
+	while (PListHead != entry->Flink)
 	{
-		if (list[i] == InPid)
+		entry = entry->Flink;
+
+		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InPid)
 		{
-			return i;
+			return InPid;
 		}
 	}
 
-	for (int i = 0; i < MAX_TREE_ENTRIES * MAX_ENTRIES; i++)
+	//If not found, check children of all parents
+	entry = PListHead;
+	while (PListHead != entry->Flink)
 	{
-		if (chromeTree[i] == InPid)
+		entry = entry->Flink;
+
+		PLIST_ENTRY childHead = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->ChildHead;
+		PLIST_ENTRY child = childHead;
+		while (childHead != child->Flink)
 		{
-			//return 0-9 depending on pos
-			return (int)i / (int)MAX_TREE_ENTRIES;
+			if (CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->Pid == InPid)
+			{
+				return CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->ParentPid;
+			}
 		}
 	}
 
-
-	return -1;
+	return 0;
 }

@@ -4,6 +4,7 @@ PVOID OB_CALLBACK_HANDLE = NULL;
 
 OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  POB_PRE_OPERATION_INFORMATION InPreInfo);
 VOID ObjectPostCallback(IN  PVOID InRegistrationContext, IN  POB_POST_OPERATION_INFORMATION InPostInfo);
+LPSTR GetProcessNameFromPid(HANDLE pid);
 
 //
 // PRE OPERATION
@@ -13,12 +14,6 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 	UNREFERENCED_PARAMETER(InRegistrationContext);
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "PreProcCreateRoutine. \n");
 
-
-	//if (PreInfo->KernelHandle != 1)
-	//{
-	//	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "Kernel access requested - allow!\n");
-	//	goto Exit;
-	//}
 
 	PEPROCESS OpenedProcess = (PEPROCESS)InPreInfo->Object;
 	PEPROCESS CurrentProcess = PsGetCurrentProcess();
@@ -51,7 +46,11 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 
 		//FIND / Compare operation here
 		LockMutex(GlobalMutex);
-		if (findPidInTree(HandleToLong(PsGetCurrentProcessId())) == findPidInTree(HandleToLong(PsGetProcessId(OpenedProcess)))) {
+
+		ULONG currentPid = FindPidInTree(HandleToLong(PsGetCurrentProcessId()));
+		ULONG openedPid = FindPidInTree(HandleToLong(PsGetProcessId(OpenedProcess)));
+
+		if (currentPid == openedPid) {
 			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Self access: %s -> %s\n", OpenedProcName, TargetProcName);
 			UnlockMutex(GlobalMutex);
 			goto Exit;

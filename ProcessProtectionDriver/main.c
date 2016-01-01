@@ -24,25 +24,26 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegi
 
 	Initalize();
 
-	/*if (!NT_SUCCESS(Status = PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, FALSE)))
+	if (!NT_SUCCESS(Status = PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, FALSE)))
 	{
 		goto ERROR_ABORT;
 	}
 	CreateProcessNotifyExSet = TRUE;
 
+	
 	if (!NT_SUCCESS(Status = PsSetLoadImageNotifyRoutine(OnImageLoadNotifyRoutine)))
 	{
 		goto ERROR_ABORT;
 	}
 	LoadImageNotifyRoutineSet = TRUE;
-
+	
 
 	if (!NT_SUCCESS(Status = RegisterOBCallback()))
 	{
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Faild to RegisterCallbackFunction .status : 0x%X \n", Status);
 		goto ERROR_ABORT;
 	}
-	WriteProcessMemoryCallbackRoutineSet = TRUE;*/
+	WriteProcessMemoryCallbackRoutineSet = TRUE;
 
 	if(FALSE)
 	{
@@ -82,11 +83,10 @@ ERROR_ABORT:
 VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 {
 	UNREFERENCED_PARAMETER(InDriverObject);
-	/*
-	FreeOBCallback();
 	PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
-	*/
+	FreeOBCallback();
+	
 	Shutdown();
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
 }
