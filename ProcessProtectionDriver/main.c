@@ -23,6 +23,8 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegi
 	//Initialize a mutex object so both callbacks don't create any weird race conditions and possibly bsods.
 	KeInitializeGuardedMutex(GlobalMutex);
 
+	InitializePTree();
+
 	if (!NT_SUCCESS(Status = PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, FALSE)))
 	{
 		goto ERROR_ABORT;
@@ -66,6 +68,8 @@ ERROR_ABORT:
 		FreeOBCallback();
 	}
 
+	DestroyPTree();
+
 	return Status;
 }
 
@@ -79,6 +83,6 @@ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 	FreeOBCallback();
 	PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
-
+	DestroyPTree();
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
 }

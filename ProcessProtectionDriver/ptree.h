@@ -11,8 +11,11 @@ extern int pos;
 extern long* list;
 extern long* chromeTree;
 
+
+VOID InitializePTree();
+VOID DestroyPTree();
 BOOLEAN addChildProcessToTree(long parentPid, long pid);
-void insertProcessToTree(long pid);
-void removePidFromTree(long pid);
+VOID insertProcessToTree(long pid);
+VOID removePidFromTree(long pid);
 int findPidInTree(long pid);
 #endif

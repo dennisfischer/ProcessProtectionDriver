@@ -12,7 +12,7 @@ void InitializePTree()
 	chromeTree = AllocMemory(1, sizeof(long) * MAX_ENTRIES * MAX_TREE_ENTRIES);
 }
 
-void DestoyPTree()
+void DestroyPTree()
 {
 	FreeMemory(list);
 	FreeMemory(chromeTree);
