@@ -21,6 +21,7 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegi
 	InDriverObject->DriverUnload = UnloadRoutine;
 
 	//Initialize a mutex object so both callbacks don't create any weird race conditions and possibly bsods.
+	GlobalMutex = AllocMemory(1, sizeof(KGUARDED_MUTEX));
 	KeInitializeGuardedMutex(GlobalMutex);
 
 	InitializePTree();
@@ -69,7 +70,7 @@ ERROR_ABORT:
 	}
 
 	DestroyPTree();
-
+	FreeMemory(GlobalMutex);
 	return Status;
 }
 
@@ -84,5 +85,8 @@ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 	PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
 	DestroyPTree();
+	if (IsValidPointer(GlobalMutex)) {
+		FreeMemory(GlobalMutex);
+	}
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
 }

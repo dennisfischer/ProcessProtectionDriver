@@ -14,8 +14,12 @@ void InitializePTree()
 
 void DestroyPTree()
 {
-	FreeMemory(list);
-	FreeMemory(chromeTree);
+	if (IsValidPointer(list)) {
+		FreeMemory(list);
+	}
+	if (IsValidPointer(list)) {
+		FreeMemory(chromeTree);
+	}
 }
 
 void insertProcessToTree(long InPid)

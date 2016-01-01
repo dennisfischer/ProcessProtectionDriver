@@ -45,6 +45,12 @@ BOOLEAN MoveMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
 	return TRUE;
 }
 
+BOOLEAN IsValidPointer(PVOID InPtr)
+{
+	if ((InPtr == NULL) || (InPtr == (PVOID)~0))
+		return FALSE;
+	return TRUE;
+}
 
 VOID LockMutex(PKGUARDED_MUTEX InMutex)
 {

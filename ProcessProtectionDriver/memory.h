@@ -9,6 +9,7 @@ PVOID AllocMemory(BOOLEAN InZeroMemory, ULONG InSize);
 VOID FreeMemory(PVOID InPointer);
 VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount);
 BOOLEAN MoveMemory(PVOID InDest, PVOID InSource, ULONG InByteCount);
+BOOLEAN IsValidPointer(PVOID InPtr);
 
 VOID LockMutex(PKGUARDED_MUTEX InMutex);
 VOID UnlockMutex(PKGUARDED_MUTEX InMutex);
