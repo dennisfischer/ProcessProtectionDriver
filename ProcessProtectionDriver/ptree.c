@@ -44,8 +44,6 @@ VOID DestroyPTree()
 		FreeMemory(record);
 	}
 
-	FreeMemory(PListHead);
-
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Destroy PTree\n");
 }
 

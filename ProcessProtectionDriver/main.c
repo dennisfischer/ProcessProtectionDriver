@@ -10,7 +10,7 @@ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject);
 VOID Initalize();
 VOID Shutdown();
 
-NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegistryPath)
+_Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegistryPath)
 {
 	UNREFERENCED_PARAMETER(InRegistryPath);
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver start\n");
@@ -75,13 +75,13 @@ ERROR_ABORT:
 //
 // Unload routine
 //
-VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
+_Use_decl_annotations_ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 {
 	UNREFERENCED_PARAMETER(InDriverObject);
 	PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
 	FreeOBCallback();
-	Shutdown();
+	//Shutdown();
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
 }
 

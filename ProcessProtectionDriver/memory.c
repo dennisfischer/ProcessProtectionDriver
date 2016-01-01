@@ -4,7 +4,7 @@
 #ifndef _DEBUG
 #pragma optimize ("", off) // suppress _memset
 #endif
-void ZeroMemory(PVOID InTarget,	ULONG InByteCount)
+VOID ZeroMemory(PVOID InTarget,	ULONG InByteCount)
 {
 	ULONG Index;
 	UCHAR* Target = (UCHAR*)InTarget;
@@ -31,7 +31,9 @@ PVOID AllocMemory(BOOLEAN InZeroMemory, ULONG InSize)
 
 VOID FreeMemory(PVOID InPointer)
 {
-	ExFreePool(InPointer);
+	if (IsValidPointer(InPointer)) {
+		ExFreePool(InPointer);
+	}
 }
 
 VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
@@ -47,21 +49,6 @@ VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
 		Dest++;
 		Src++;
 	}
-}
-
-BOOLEAN MoveMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
-{
-	PVOID Buffer = AllocMemory(FALSE, InByteCount);
-
-	if (Buffer == NULL)
-		return FALSE;
-
-	RtlCopyMemory(Buffer, InSource, InByteCount);
-	RtlCopyMemory(InDest, Buffer, InByteCount);
-
-	FreeMemory(Buffer);
-
-	return TRUE;
 }
 
 BOOLEAN IsValidPointer(PVOID InPtr)

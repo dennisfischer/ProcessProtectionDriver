@@ -31,7 +31,7 @@ VOID OnCreateProcessNotifyRoutine(PEPROCESS InProcess, HANDLE InProcessId, PPS_C
 		}
 
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "PID : %d (%d)  ImageName :%wZ CmdLine : %wZ \n",
-			InProcessId, InCreateInfo->ParentProcessId,
+			HandleToLong(InProcessId), HandleToLong(InCreateInfo->ParentProcessId),
 			InCreateInfo->ImageFileName,
 			InCreateInfo->CommandLine
 		);

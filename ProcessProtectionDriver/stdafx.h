@@ -16,7 +16,8 @@
          DbgRaiseAssertionFailure(), FALSE) : \
         TRUE)
 
-#define DRIVER_EXPORT(proc)	PROC_##proc * proc
+DRIVER_INITIALIZE DriverEntry;
+DRIVER_UNLOAD UnloadRoutine;
 
 PKGUARDED_MUTEX GlobalMutex;
 NTSTATUS RegisterOBCallback();
