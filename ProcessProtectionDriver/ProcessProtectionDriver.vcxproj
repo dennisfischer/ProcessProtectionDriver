@@ -85,11 +85,12 @@
     </ResourceCompile>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Disabled</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WarningLevel>Level4</WarningLevel>
       <ExceptionHandling>
       </ExceptionHandling>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Midl>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -105,11 +106,12 @@
     </ResourceCompile>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Disabled</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WarningLevel>Level4</WarningLevel>
       <ExceptionHandling>
       </ExceptionHandling>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Midl>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -125,11 +127,12 @@
     </ResourceCompile>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Disabled</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WarningLevel>Level4</WarningLevel>
       <ExceptionHandling>
       </ExceptionHandling>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Midl>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -145,11 +148,12 @@
     </ResourceCompile>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>Disabled</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <WarningLevel>Level4</WarningLevel>
       <ExceptionHandling>
       </ExceptionHandling>
+      <PrecompiledHeader>Create</PrecompiledHeader>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Midl>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -160,16 +164,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="tdriver.cpp">
-      <AdditionalIncludeDirectories>;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreCompiledHeaderFile>pch.h</PreCompiledHeaderFile>
-      <PreCompiledHeader>Use</PreCompiledHeader>
-      <PreCompiledHeaderOutputFile>$(IntDir)\pch.h.pch</PreCompiledHeaderOutputFile>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="image_load_routine.c" />
+    <ClCompile Include="main.c" />
+    <ClCompile Include="memory.c" />
+    <ClCompile Include="obcallback_routine.c" />
+    <ClCompile Include="proc_create_routine.c" />
+    <ClCompile Include="ptree.c" />
   </ItemGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" Condition="'$(ConfigurationType)'=='Driver' or '$(ConfigurationType)'=='DynamicLibrary'" />
@@ -186,9 +186,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="ProcessTree.hpp" />
-    <ClInclude Include="tdriver.h" />
+    <ClInclude Include="memory.h" />
+    <ClInclude Include="ptree.h" />
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

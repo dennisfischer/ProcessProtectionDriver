@@ -1,47 +1,49 @@
-#pragma once
-const int MAX_ENTRIES = 10;
-const int MAX_TREE_ENTRIES = 50;
+#include "stdafx.h"
+
+int MAX_ENTRIES = 10;
+int MAX_TREE_ENTRIES = 50;
 int pos = 0;
-long list[MAX_ENTRIES] = { 0 };
-long chromeTree[MAX_ENTRIES * MAX_TREE_ENTRIES] = { 0 };
+long* list;
+long* chromeTree;
 
-bool addChildProcessToTree(long parentPid, long pid);
-void insertProcessToTree(long pid);
-void removePidFromTree(long pid);
-int findPidInTree(long pid);
+void InitializePTree()
+{
+	list = AllocMemory(1, sizeof(long) * MAX_ENTRIES);
+	chromeTree = AllocMemory(1, sizeof(long) * MAX_ENTRIES * MAX_TREE_ENTRIES);
+}
 
+void DestoyPTree()
+{
+	FreeMemory(list);
+	FreeMemory(chromeTree);
+}
 
-inline void insertProcessToTree(long pid)
+void insertProcessToTree(long InPid)
 {
 	for (int i = 0; i < MAX_ENTRIES; i++)
 	{
 		if (list[i] == 0)
 		{
-			list[i] = pid;
+			list[i] = InPid;
 
-			DbgPrintEx(
-				DPFLTR_IHVDRIVER_ID,
-				DPFLTR_ERROR_LEVEL,
-				"Entries: %d \n",
-				(i + 1)
-				);
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Entries: %d \n", (i + 1));
 			return;
 		}
 	}
 
-	list[pos++] = pid;
+	list[pos++] = InPid;
 	for (int i = pos*MAX_ENTRIES; i < pos*MAX_ENTRIES + MAX_TREE_ENTRIES; i++)
 	{
 		chromeTree[i] = 0;
 	}
 }
 
-inline bool addChildProcessToTree(long parentPid, long pid)
+BOOLEAN addChildProcessToTree(long InParentPid, long InChildPid)
 {
 	int position = -1;
 	for (int i = 0; i < MAX_ENTRIES; i++)
 	{
-		if (list[i] == parentPid)
+		if (list[i] == InParentPid)
 		{
 			position = i;
 			break;
@@ -49,34 +51,28 @@ inline bool addChildProcessToTree(long parentPid, long pid)
 	}
 	//Better expand the tree instead of returning
 	if (position == -1)
-		return false;
+		return FALSE;
 
 	for (int i = position * MAX_TREE_ENTRIES; i < position * MAX_TREE_ENTRIES + MAX_TREE_ENTRIES; i++)
 	{
 		if (chromeTree[i] == 0)
 		{
-			chromeTree[i] = pid;
+			chromeTree[i] = InChildPid;
 
-
-			DbgPrintEx(
-				DPFLTR_IHVDRIVER_ID,
-				DPFLTR_ERROR_LEVEL,
-				"Children: %d \n",
-				(i + 1)
-				);
-			return true;
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Children: %d \n", (i + 1));
+			return TRUE;
 		}
 	}
 
-	return false;
+	return FALSE;
 }
 
- inline void removePidFromTree(long pid)
+void removePidFromTree(long InPid)
 {
 	int position = -1;
 	for (int i = 0; i < MAX_ENTRIES; i++)
 	{
-		if (list[i] == pid)
+		if (list[i] == InPid)
 		{
 			position = i;
 			list[i] = 0;
@@ -86,7 +82,7 @@ inline bool addChildProcessToTree(long parentPid, long pid)
 	if (position == -1) {
 		for (int i = 0; i < MAX_ENTRIES * MAX_TREE_ENTRIES; i++)
 		{
-			if (chromeTree[i] == pid)
+			if (chromeTree[i] == InPid)
 			{
 				chromeTree[i] = 0;
 			}
@@ -101,11 +97,11 @@ inline bool addChildProcessToTree(long parentPid, long pid)
 	}
 }
 
-inline int findPidInTree(long pid)
+int findPidInTree(long InPid)
 {
 	for (int i = 0; i < MAX_ENTRIES; i++)
 	{
-		if (list[i] == pid)
+		if (list[i] == InPid)
 		{
 			return i;
 		}
@@ -113,10 +109,10 @@ inline int findPidInTree(long pid)
 
 	for (int i = 0; i < MAX_TREE_ENTRIES * MAX_ENTRIES; i++)
 	{
-		if (chromeTree[i] == pid)
+		if (chromeTree[i] == InPid)
 		{
 			//return 0-9 depending on pos
-			return int(i / MAX_TREE_ENTRIES);
+			return (int)i / (int)MAX_TREE_ENTRIES;
 		}
 	}
 

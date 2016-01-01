@@ -1,5 +1,6 @@
-#pragma once
-#include "pch.h"
+#ifndef _COMMON_H_
+#define _COMMON_H_
+#include "stdafx.h"
 // coded by Behrooz @http://stackoverflow.com/questions/20552300/hook-zwterminateprocess-in-x64-driver-without-ssdt
 
 //-----------------------------------------------
@@ -21,7 +22,7 @@
 // callback
 //-----------------------------------------------
 
-PVOID _CallBacks_Handle = NULL;
+extern PVOID OB_CALLBACK_HANDLE;
 
 typedef struct _OB_REG_CONTEXT
 {
@@ -35,10 +36,10 @@ typedef struct _OB_REG_CONTEXT
 //-----------------------------------------------
 // PID2ProcName
 //-----------------------------------------------
-typedef PCHAR (*GET_PROCESS_IMAGE_NAME)(PEPROCESS Process);
+typedef PCHAR(*GET_PROCESS_IMAGE_NAME)(PEPROCESS Process);
 GET_PROCESS_IMAGE_NAME gGetProcessImageFileName;
 
 LPSTR GetProcessNameFromPid(HANDLE pid);
-extern "C" NTSTATUS PsLookupProcessByProcessId(IN HANDLE ulProcId, OUT PEPROCESS* pEProcess);
-extern "C" UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
-extern "C" LONG* NtQueryInformationProcess(HANDLE ProcessHandle, PROCESSINFOCLASS  ProcessInformationClass, PVOID             ProcessInformation, ULONG ProcessInformationLength, PULONG ReturnLength); 
+NTSTATUS PsLookupProcessByProcessId(IN HANDLE ulProcId, OUT PEPROCESS* pEProcess);
+UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
+#endif

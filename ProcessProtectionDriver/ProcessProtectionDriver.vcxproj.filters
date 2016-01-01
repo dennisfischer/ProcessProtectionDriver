@@ -37,12 +37,6 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="tdriver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -61,7 +55,13 @@
     <ClInclude Include="tdriver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ProcessTree.hpp">
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="memory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ptree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,7 +71,22 @@
     </Inf>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tdriver.cpp">
+    <ClCompile Include="main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="memory.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ptree.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="proc_create_routine.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="obcallback_routine.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="image_load_routine.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
