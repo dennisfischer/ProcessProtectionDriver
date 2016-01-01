@@ -1,11 +1,30 @@
 #include "stdafx.h"
 
+
+#ifndef _DEBUG
+#pragma optimize ("", off) // suppress _memset
+#endif
+void ZeroMemory(PVOID InTarget,	ULONG InByteCount)
+{
+	ULONG Index;
+	UCHAR* Target = (UCHAR*)InTarget;
+
+	for (Index = 0; Index < InByteCount; Index++)
+	{
+		*Target = 0;
+		Target++;
+	}
+}
+#ifndef _DEBUG
+#pragma optimize ("", on) 
+#endif
+
 PVOID AllocMemory(BOOLEAN InZeroMemory, ULONG InSize)
 {
 	PVOID Result = ExAllocatePoolWithTag(NonPagedPool, InSize, 'PROT');
 
 	if (InZeroMemory && (Result != NULL))
-		RtlZeroMemory(Result, InSize);
+		ZeroMemory(Result, InSize);
 
 	return Result;
 }

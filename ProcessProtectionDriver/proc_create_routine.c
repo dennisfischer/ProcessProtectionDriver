@@ -3,6 +3,7 @@
 VOID OnCreateProcessNotifyRoutine(PEPROCESS InProcess, HANDLE InProcessId, PPS_CREATE_NOTIFY_INFO InCreateInfo)
 {
 	UNREFERENCED_PARAMETER(InProcess);
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "OnCreateProcessNotifyRoutine\n");
 
 	//Process exiting
 	if (InCreateInfo == NULL)
@@ -10,6 +11,7 @@ VOID OnCreateProcessNotifyRoutine(PEPROCESS InProcess, HANDLE InProcessId, PPS_C
 		LockMutex(GlobalMutex);
 		RemovePidFromTree((ULONG)HandleToLong(InProcessId));
 		UnlockMutex(GlobalMutex);
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit OnCreateProcessNotifyRoutine\n");
 		return;
 	}
 
@@ -34,5 +36,6 @@ VOID OnCreateProcessNotifyRoutine(PEPROCESS InProcess, HANDLE InProcessId, PPS_C
 			InCreateInfo->CommandLine
 		);
 	}
+	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit OnCreateProcessNotifyRoutine\n");
 }
 

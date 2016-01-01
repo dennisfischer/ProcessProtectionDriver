@@ -45,11 +45,6 @@ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegi
 	}
 	WriteProcessMemoryCallbackRoutineSet = TRUE;
 
-	if(FALSE)
-	{
-		goto ERROR_ABORT;
-	}
-
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver Loaded\n");
 
 	return STATUS_SUCCESS;
@@ -86,7 +81,6 @@ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 	PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
 	FreeOBCallback();
-	
 	Shutdown();
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
 }
@@ -94,7 +88,7 @@ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 VOID Initalize()
 {
 	//Initialize a mutex object so both callbacks don't create any weird race conditions and possibly bsods.
-	GlobalMutex = AllocMemory(1, sizeof(KGUARDED_MUTEX));
+	GlobalMutex = AllocMemory(TRUE, sizeof(KGUARDED_MUTEX));
 	KeInitializeGuardedMutex(GlobalMutex);
 	InitializePTree();
 }
