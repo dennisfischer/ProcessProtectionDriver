@@ -46,6 +46,8 @@
 
 #endif
 
+NTSTATUS InitEasyHook();
+VOID FinalizeEasyHook();
 
 #ifdef __cplusplus
 extern "C"{

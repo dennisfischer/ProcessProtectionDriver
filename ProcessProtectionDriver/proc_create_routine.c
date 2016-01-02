@@ -30,7 +30,7 @@ VOID OnCreateProcessNotifyRoutine(PEPROCESS InProcess, HANDLE InProcessId, PPS_C
 			UnlockMutex(GlobalMutex);
 		}
 
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "PID : %d (%d)  ImageName :%wZ CmdLine : %wZ \n",
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "PID : %d (%d)  ImageName :%wZ CmdLine : %wZ \n",
 			HandleToLong(InProcessId), HandleToLong(InCreateInfo->ParentProcessId),
 			InCreateInfo->ImageFileName,
 			InCreateInfo->CommandLine

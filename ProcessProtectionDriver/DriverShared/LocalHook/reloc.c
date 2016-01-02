@@ -192,7 +192,7 @@ Parameters:
 	ULONGLONG           RelAddrOffset = 0;
     LONGLONG            RelAddrSign = 1;
 
-    ASSERT(MemDelta == (LONG)MemDelta,L"reloc.c - MemDelta == (LONG)MemDelta");
+    //ASSERT(MemDelta == (LONG)MemDelta,L"reloc.c - MemDelta == (LONG)MemDelta");
 
     *OutWasRelocated = FALSE;
 

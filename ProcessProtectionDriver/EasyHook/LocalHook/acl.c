@@ -62,8 +62,8 @@ Parameters:
     if(InProcessCount > MAX_ACE_COUNT)
         return STATUS_INVALID_PARAMETER_2;
 
-    if(!IsValidPointer(InProcessIdList, InProcessCount * sizeof(ULONG)))
-        return STATUS_INVALID_PARAMETER_1;
+	if (InProcessCount != 0 && !IsValidPointer(InProcessIdList, InProcessCount * sizeof(ULONG)))
+		return STATUS_INVALID_PARAMETER_1;
 
     for(Index = 0; Index < InProcessCount; Index++)
     {
