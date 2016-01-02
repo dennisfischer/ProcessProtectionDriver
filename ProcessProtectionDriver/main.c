@@ -40,21 +40,14 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN
 	LoadImageNotifyRoutineSet = TRUE;
 	
 
-	if (!NT_SUCCESS(Status = RegisterOBCallback()))
+/*	if (!NT_SUCCESS(Status = RegisterOBCallback()))
 	{
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Faild to RegisterOBCallback .status : 0x%X \n", Status);
 		goto ERROR_ABORT;
 	}
-	WriteProcessMemoryCallbackRoutineSet = TRUE;
+	WriteProcessMemoryCallbackRoutineSet = TRUE;*/
 
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver Loaded\n");
-
-
-	////EASY-HOOK
-
-	InitEasyHook();
-	Status = RunTestSuite();
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "RunTestSuite .status : 0x%X \n", Status);
 
 	return STATUS_SUCCESS;
 
@@ -77,7 +70,6 @@ ERROR_ABORT:
 		FreeOBCallback();
 	}
 
-	//FinalizeEasyHook();
 	Shutdown();
 	return Status;
 }
@@ -91,7 +83,6 @@ _Use_decl_annotations_ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 	PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
 	FreeOBCallback();
-	//FinalizeEasyHook();
 	//causes BSODS
 	//Shutdown();
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
