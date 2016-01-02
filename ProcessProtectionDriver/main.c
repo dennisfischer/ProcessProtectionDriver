@@ -96,7 +96,7 @@ VOID Initalize()
 VOID Shutdown()
 {
 	DestroyPTree();
-	if (IsValidPointer(GlobalMutex)) {
+	if (IsPointerValid(GlobalMutex)) {
 		FreeMemory(GlobalMutex);
 	}
 }

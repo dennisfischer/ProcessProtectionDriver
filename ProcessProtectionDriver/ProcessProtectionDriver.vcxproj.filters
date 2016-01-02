@@ -17,6 +17,30 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\EasyHook">
+      <UniqueIdentifier>{8af8c9a3-2805-4d48-a1f7-d3280be5a48c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EasyHook\LocalHook">
+      <UniqueIdentifier>{bf1a0f44-f110-4792-8f3b-29a7bba5310f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\EasyHook\Rtl">
+      <UniqueIdentifier>{354f8d2f-efd4-43f7-a935-1b3a0eddd891}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DriverShared">
+      <UniqueIdentifier>{97e5956b-4b37-464e-a1a4-c3d22ae7f482}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DriverShared\ASM">
+      <UniqueIdentifier>{b16f681c-8f31-40bc-a449-715568f87572}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DriverShared\Disassembler">
+      <UniqueIdentifier>{cd4b7c0d-c370-472d-9a6f-547d139968f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DriverShared\LocalHook">
+      <UniqueIdentifier>{c4ab802f-01c0-4684-b1bc-0aea637ac0b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\DriverShared\Rtl">
+      <UniqueIdentifier>{caaf6c10-8b0c-473c-a133-52fc6810b2ac}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -34,9 +58,6 @@
     <ClInclude Include="common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -45,6 +66,15 @@
     </ClInclude>
     <ClInclude Include="ptree.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EasyHook\easyhook.h">
+      <Filter>Source Files\EasyHook</Filter>
+    </ClInclude>
+    <ClInclude Include="DriverShared\DriverShared.h">
+      <Filter>Source Files\DriverShared</Filter>
+    </ClInclude>
+    <ClInclude Include="DriverShared\rtl.h">
+      <Filter>Source Files\DriverShared</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -71,5 +101,67 @@
     <ClCompile Include="image_load_routine.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EasyHook\LocalHook\acl.c">
+      <Filter>Source Files\EasyHook\LocalHook</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\Disassembler\libudis86\udis86.c">
+      <Filter>Source Files\DriverShared\Disassembler</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\Disassembler\libudis86\decode.c">
+      <Filter>Source Files\DriverShared\Disassembler</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\Disassembler\libudis86\itab.c">
+      <Filter>Source Files\DriverShared\Disassembler</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\Disassembler\libudis86\syn.c">
+      <Filter>Source Files\DriverShared\Disassembler</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\Disassembler\libudis86\syn-att.c">
+      <Filter>Source Files\DriverShared\Disassembler</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\Disassembler\libudis86\syn-intel.c">
+      <Filter>Source Files\DriverShared\Disassembler</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\LocalHook\alloc.c">
+      <Filter>Source Files\DriverShared\LocalHook</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\LocalHook\barrier.c">
+      <Filter>Source Files\DriverShared\LocalHook</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\LocalHook\caller.c">
+      <Filter>Source Files\DriverShared\LocalHook</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\LocalHook\install.c">
+      <Filter>Source Files\DriverShared\LocalHook</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\LocalHook\reloc.c">
+      <Filter>Source Files\DriverShared\LocalHook</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\LocalHook\uninstall.c">
+      <Filter>Source Files\DriverShared\LocalHook</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\Rtl\error.c">
+      <Filter>Source Files\DriverShared\Rtl</Filter>
+    </ClCompile>
+    <ClCompile Include="DriverShared\Rtl\string.c">
+      <Filter>Source Files\DriverShared\Rtl</Filter>
+    </ClCompile>
+    <ClCompile Include="sample.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EasyHook\easyhook.c">
+      <Filter>Source Files\EasyHook</Filter>
+    </ClCompile>
+    <ClCompile Include="EasyHook\Rtl\ememory.c">
+      <Filter>Source Files\EasyHook\Rtl</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="DriverShared\ASM\HookSpecific_x64.asm">
+      <Filter>Source Files\DriverShared\ASM</Filter>
+    </MASM>
+    <MASM Include="DriverShared\ASM\HookSpecific_x86.asm">
+      <Filter>Source Files\DriverShared\ASM</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

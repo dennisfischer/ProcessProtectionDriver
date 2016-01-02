@@ -3,12 +3,25 @@
 #if (_MSC_VER > 1000)
 #pragma once
 #endif
-
 #include <ntddk.h>
 #include <ntstrsafe.h>
 #include "common.h"
 #include "memory.h"
 #include "ptree.h"
+
+///////////////////////////////// EASY HOOOK ///////////////////////////////////////
+#include "EasyHook/easyhook.h"
+
+#define RTL_SUCCESS(ntstatus)       NT_SUCCESS(ntstatus)
+#include "DriverShared/DriverShared.h"
+
+EASYHOOK_NT_INTERNAL RunTestSuite();
+void LhBarrierThreadDetach();
+NTSTATUS LhBarrierProcessAttach();
+void LhBarrierProcessDetach();
+
+extern BOOLEAN LhModuleListChanged;
+///////////////////////////////// EASY HOOOK ///////////////////////////////////////
 
 #define TD_ASSERT(_exp) \
     ((!(_exp)) ? \

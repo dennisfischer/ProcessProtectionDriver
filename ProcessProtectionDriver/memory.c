@@ -31,7 +31,7 @@ PVOID AllocMemory(BOOLEAN InZeroMemory, ULONG InSize)
 
 VOID FreeMemory(PVOID InPointer)
 {
-	if (IsValidPointer(InPointer)) {
+	if (IsPointerValid(InPointer)) {
 		ExFreePool(InPointer);
 	}
 }
@@ -51,7 +51,7 @@ VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
 	}
 }
 
-BOOLEAN IsValidPointer(PVOID InPtr)
+BOOLEAN IsPointerValid(PVOID InPtr)
 {
 	if ((InPtr == NULL) || (InPtr == (PVOID)~0))
 		return FALSE;
