@@ -166,6 +166,7 @@
     <ClCompile Include="obcallback_routine.c" />
     <ClCompile Include="proc_create_routine.c" />
     <ClCompile Include="ptree.c" />
+    <ClCompile Include="sha2.c" />
   </ItemGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" Condition="'$(ConfigurationType)'=='Driver' or '$(ConfigurationType)'=='DynamicLibrary'" />
@@ -182,8 +183,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h" />
+    <ClInclude Include="image_load_routine.h" />
     <ClInclude Include="memory.h" />
     <ClInclude Include="ptree.h" />
+    <ClInclude Include="sha2.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

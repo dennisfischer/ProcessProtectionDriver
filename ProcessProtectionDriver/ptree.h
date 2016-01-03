@@ -5,10 +5,6 @@
 #endif
 #include "stdafx.h"
 
-#ifndef CONTAINING_RECORD
-#define CONTAINING_RECORD(address, type, field) ((type *)((char*)(address) -(LIST_ENTRY*)(&((type *)0)->field)))
-#endif
-
 struct _PROCESS_LIST_ENTRY {
 	LIST_ENTRY ListEntry;
 	ULONG Pid;

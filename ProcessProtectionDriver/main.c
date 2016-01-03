@@ -38,15 +38,14 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN
 		goto ERROR_ABORT;
 	}
 	LoadImageNotifyRoutineSet = TRUE;
-	
 
-/*	if (!NT_SUCCESS(Status = RegisterOBCallback()))
+	/*if (!NT_SUCCESS(Status = RegisterOBCallback()))
 	{
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Faild to RegisterOBCallback .status : 0x%X \n", Status);
 		goto ERROR_ABORT;
 	}
-	WriteProcessMemoryCallbackRoutineSet = TRUE;*/
-
+	WriteProcessMemoryCallbackRoutineSet = TRUE;
+	*/
 	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver Loaded\n");
 
 	return STATUS_SUCCESS;

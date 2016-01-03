@@ -3,11 +3,14 @@
 #if (_MSC_VER > 1000)
 #pragma once
 #endif
-#include <ntddk.h>
-#include <ntstrsafe.h>
+#include <Ntifs.h>
+#include <wdm.h>
 #include "common.h"
 #include "memory.h"
 #include "ptree.h"
+#include "sha2.h"
+#include "image_load_routine.h"
+#include <Ntstrsafe.h>
 
 #define TD_ASSERT(_exp) \
     ((!(_exp)) ? \

@@ -1,113 +1,126 @@
 #include "stdafx.h"
 
-#include <stdint.h>
-typedef uint8_t uint8;
-typedef uint16_t uint16;
-typedef uint32_t uint32;
+VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InProcessId, IN PIMAGE_INFO InImageInfo)
+{
+	if (InFullImageName != NULL && InFullImageName->Length > 0 && wcsstr(InFullImageName->Buffer, L"dll-injector-sample.dll")) {
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "Malicious DLL Sample - PID : %d ImageName :%wZ\n", HandleToLong(InProcessId), InFullImageName);
 
-struct MzHeader {
-	uint16 magic; /* == 0x5a4D */
-	uint16 bytesInLastBlock;
-	uint16 blocksInFile;
-	uint16 numRelocations;
-	uint16 headerParagraphs;
-	uint16 minExtraParagraphs;
-	uint16 maxExtraParagraphs;
-	uint16 ss;
-	uint16 sp;
-	uint16 checksum;
-	uint16 ip;
-	uint16 cs;
-	uint16 relocationTableOffset;
-	uint16 overlayNumber;
-	uint16 reserved[4];
-	uint16 oemID;
-	uint16 oemInfo;
-	uint16 reserved2[10];
-	uint32 lfaNew;	// PE Address
-};
+		if (InImageInfo->ExtendedInfoPresent) {
 
-struct PeHeader {
-	uint32 magic; // 0x4550
-	uint16 machine;
-	uint16 numberOfSections;
-	uint32 timeDateStamp;
-	uint32 pointerToSymbolTable;
-	uint32 numberOfSymbols;
-	uint16 sizeOfOptionalHeader;
-	uint16 characteristics;
-};
+			uint8* allowed[2] = { "5ecd6f1a3b5aeef3d541aa0645f344bd7ef1a2a2b672ece6bce20c28044bedd4", "396f0d16561e13774d04f22f3439f7ae99c41d90aea0a6a7e974e67142d7c619" };
+			try
+				{
+					//IMAGE_INFO_EX* ex = CONTAINING_RECORD(InImageInfo, IMAGE_INFO_EX, ImageInfo);
+					uint8 offset = 4000;
+					uint8* sha256string = calc_sha256((uint8*)InImageInfo->ImageBase+offset, (uint8*)InImageInfo->ImageSize-offset);
+					DbgPrint("SHA2 String: %s", sha256string);
 
-struct Pe32OptionalHeader {
-	uint16 magic; // 0x010b - PE32, 0x020b - PE32+ (64 bit)
-	uint8  majorLinkerVersion;
-	uint8  minorLinkerVersion;
-	uint32 sizeOfCode;
-	uint32 sizeOfInitializedData;
-	uint32 sizeOfUninitializedData;
-	uint32 addressOfEntryPoint;
-	uint32 baseOfCode;
-	uint32 baseOfData;
-	uint32 imageBase;
-	uint32 sectionAlignment;
-	uint32 fileAlignment;
-	uint16 majorOperatingSystemVersion;
-	uint16 minorOperatingSystemVersion;
-	uint16 majorImageVersion;
-	uint16 minorImageVersion;
-	uint16 majorSubsystemVersion;
-	uint16 minorSubsystemVersion;
-	uint32 win32VersionValue;
-	uint32 sizeOfImage;
-	uint32 sizeOfHeaders;
-	uint32 checksum;
-	uint16 subsystem;
-	uint16 llCharacteristics;
-	uint32 sizeOfStackReserve;
-	uint32 sizeOfStackCommit;
-	uint32 sizeOfHeapReserve;
-	uint32 sizeOfHeapCommit;
-	uint32 loaderFlags;
-	uint32 numberOfRvaAndSizes;
-};
+					BOOLEAN match = FALSE;
+					int length = sizeof(allowed) / sizeof(allowed[0]);
+					for (int i = 0; i < length; i++) {
+						if (strcmp(sha256string, allowed) == 0)
+						{
+							//equal
+							DbgPrint("EQUAL!");
+							match = TRUE;
+						}
+					}
 
-unsigned char*  ReadPE(unsigned char* base) {
+					if(!match)
+					{
+						DbgPrint("NOT EQUAL!");
+						DbgPrint("ALLOWED: %s", allowed[0]);
+						DbgPrint("HAVE: %s", sha256string);
+					}
+
+				} except(SYSTEM_SERVICE_EXCEPTION) {
+					DbgPrint("error:%x");
+				}
+		}
+
+		uint8* entryPointAbs = NULL;
+		try
+		{
+			PRKAPC_STATE apcState = AllocMemory(TRUE, sizeof(KAPC_STATE));
+			PEPROCESS pEProcess;
+			PsLookupProcessByProcessId(InProcessId, &pEProcess);
+
+			KeStackAttachProcess(pEProcess, apcState);
+
+#ifdef X64_DRIVER
+			KIRQL CurrentIRQL = KeGetCurrentIrql();
+			RtlWPOff();
+#endif
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "Attached");
+			entryPointAbs = ReadPE(InImageInfo->ImageBase);
+			uint8 patch[] = { 0xC3 };
+			CopyMemory(entryPointAbs, patch, sizeof(patch));
+#ifdef X64_DRIVER
+			RtlWPOn(CurrentIRQL);
+#endif
+
+			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "Dettached");
+			KeUnstackDetachProcess(apcState);
+
+			FreeMemory(apcState);
+		}
+		except(SYSTEM_SERVICE_EXCEPTION)//will crash without this.
+		{
+			DbgPrint("error:%x");
+		}
+
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "DLL! %p, %x\n", InImageInfo->ImageBase, InImageInfo->ImageBase);
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Entry! %p, %x\n", entryPointAbs, entryPointAbs);
+
+
+		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Done!\n");
+	}
+}
+uint8* sha256_hash_string(char hash[SHA256_DIGEST_LENGTH])
+{
+	uint8 sha256string[SHA256_DIGEST_STRING_LENGTH];
+
+	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+	{
+		sprintf(&sha256string[i * 2], "%02x", (uint8)hash[i]);
+	}
+
+	return sha256string;
+}
+
+
+uint8* calc_sha256(char* base, SIZE_T size)
+{
+	char hash[SHA256_DIGEST_LENGTH];
+	SHA256_CTX sha256;
+	SHA256_Init(&sha256);
+	char* buffer = AllocMemory(TRUE, size);
+	CopyMemory(buffer, base, size);
+	SHA256_Update(&sha256, buffer, size);
+	FreeMemory(buffer);
+	SHA256_Final(hash, &sha256);
+	return sha256_hash_string(hash);
+}
+
+
+uint8* ReadPE(uint8* base) {
 	uint32 entryPoint;
 	struct MzHeader* mz = AllocMemory(TRUE, sizeof(struct MzHeader));
 	CopyMemory(mz, base, sizeof(struct MzHeader));
-	
+
 	struct PeHeader* pe = AllocMemory(TRUE, sizeof(struct PeHeader));
 	CopyMemory(pe, base + mz->lfaNew, sizeof(struct PeHeader));
 
 	struct Pe32OptionalHeader* peOpt = AllocMemory(TRUE, sizeof(struct Pe32OptionalHeader));
 	CopyMemory(peOpt, base + mz->lfaNew + sizeof(struct PeHeader), sizeof(struct Pe32OptionalHeader));
 	entryPoint = peOpt->addressOfEntryPoint;
-	
+
+	//	peOpt->addressOfEntryPoint = 0;
+	//	CopyMemory(base + mz->lfaNew + sizeof(struct PeHeader), peOpt, sizeof(struct Pe32OptionalHeader));
+
 	FreeMemory(peOpt);
 	FreeMemory(pe);
 	FreeMemory(mz);
 
 	return base + entryPoint;
-}
-
-
-VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InProcessId, IN PIMAGE_INFO InImageInfo)
-{
-	NTSTATUS Status = STATUS_SUCCESS;
-	HANDLE ProcessHandle = NULL;
-
-	if (InFullImageName != NULL && InFullImageName->Length > 0 && wcsstr(InFullImageName->Buffer, L"dll-injector-sample.dll")) {
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_TRACE_LEVEL, "Malicious DLL Sample - PID : %d ImageName :%wZ\n", HandleToLong(InProcessId), InFullImageName);
-		unsigned char* entryPointAbs = ReadPE(InImageInfo->ImageBase);
-		unsigned char patch[] = { 0xC3 };
-
-		CopyMemory(entryPointAbs, patch, sizeof(patch));
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Done!\n");
-	}
-
-ERROR_ABORT:
-
-	if (ProcessHandle != NULL) {
-		ZwClose(&ProcessHandle);
-	}
 }

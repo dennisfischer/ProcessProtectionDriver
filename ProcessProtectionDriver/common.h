@@ -1,5 +1,8 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
+#if (_MSC_VER > 1000)
+#pragma once
+#endif
 #include "stdafx.h"
 // coded by Behrooz @http://stackoverflow.com/questions/20552300/hook-zwterminateprocess-in-x64-driver-without-ssdt
 
@@ -40,6 +43,6 @@ typedef PCHAR(*GET_PROCESS_IMAGE_NAME)(PEPROCESS Process);
 GET_PROCESS_IMAGE_NAME gGetProcessImageFileName;
 
 LPSTR GetProcessNameFromPid(HANDLE pid);
-NTSTATUS PsLookupProcessByProcessId(IN HANDLE ulProcId, OUT PEPROCESS* pEProcess);
+//NTSTATUS PsLookupProcessByProcessId(IN HANDLE ulProcId, OUT PEPROCESS* pEProcess);
 UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
 #endif
