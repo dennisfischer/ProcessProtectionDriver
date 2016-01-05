@@ -55,9 +55,8 @@ VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InPr
 
 						uint8* sha256string = calc_sha256(fileData, largeInt.LowPart);
 						DbgPrint("SHA2 String: %s", sha256string);
-
-						FreeMemory(fileData);
 					}
+					FreeMemory(fileData);
 					
 				}
 				if (!NT_SUCCESS(Status = ZwClose(fileHandle)))
@@ -153,10 +152,10 @@ uint8* calc_sha256(char* base, SIZE_T size)
 	char* buffer = AllocMemory(TRUE, size);
 	CopyMemory(buffer, base, size);
 	SHA256_Update(&sha256, buffer, size);
-	FreeMemory(buffer);
 	SHA256_Final(hash, &sha256);
+	uint8* finalHash =  sha256_hash_string(hash);
 	FreeMemory(buffer);
-	return sha256_hash_string(hash);
+	return finalHash;
 }
 
 
