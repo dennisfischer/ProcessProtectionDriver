@@ -15,7 +15,7 @@ VOID LockMutex(PKGUARDED_MUTEX InMutex);
 VOID UnlockMutex(PKGUARDED_MUTEX InMutex);
 #ifdef X64_DRIVER
 	#include "intrin.h"
-	KIRQL RtlWPOff();
-	void RtlWPOn(KIRQL irql);
+_IRQL_raises_(DISPATCH_LEVEL) KIRQL RtlWPOff();
+void RtlWPOn(KIRQL irql);
 	#endif
 #endif

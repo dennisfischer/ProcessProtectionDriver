@@ -38,7 +38,8 @@ VOID FreeMemory(PVOID InPointer)
 
 VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
 {
-	ULONG Index;
+	memcpy(InDest, InSource, InByteCount);
+	/*ULONG Index;
 	UCHAR* Dest = (UCHAR*)InDest;
 	UCHAR* Src = (UCHAR*)InSource;
 
@@ -48,7 +49,7 @@ VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
 
 		Dest++;
 		Src++;
-	}
+	}*/
 }
 
 BOOLEAN IsPointerValid(PVOID InPtr)
@@ -72,6 +73,7 @@ VOID UnlockMutex(PKGUARDED_MUTEX InMutex)
 
 #if X64_DRIVER
 // Write Protection Off
+_IRQL_raises_(DISPATCH_LEVEL)
 KIRQL RtlWPOff()
 {
 	// prevent rescheduling 
