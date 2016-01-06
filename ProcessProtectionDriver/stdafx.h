@@ -4,6 +4,7 @@
 #pragma once
 #endif
 #include <Ntifs.h>
+#include <ntdef.h>
 #include <wdm.h>
 #include "common.h"
 #include "memory.h"

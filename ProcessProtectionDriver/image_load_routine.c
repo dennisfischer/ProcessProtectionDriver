@@ -1,5 +1,99 @@
 #include "stdafx.h"
 
+typedef struct _SHA_WORK_ITEM {
+
+	WORK_QUEUE_ITEM WorkItem;
+	PFILE_OBJECT FileObject;
+	PUNICODE_STRING FullImageName;
+	char* Result;
+} SHA_WORK_ITEM, *PSHA_WORK_ITEM;
+
+void HashRoutine(PVOID Parameter)
+{
+	PSHA_WORK_ITEM WorkItem = (PSHA_WORK_ITEM)Parameter;
+
+	NTSTATUS Status;
+	HANDLE fileHandle;
+	LARGE_INTEGER file_size;
+	uint8* fileData = NULL;
+	PWCH resultString = NULL;
+
+	if (!NT_SUCCESS(Status = FsRtlGetFileSize(WorkItem->FileObject, &file_size)))
+	{
+		DbgPrint("FsRtlGetFileSize failed: %d\n", Status);
+		goto Fail;
+	}
+
+	DbgPrint("File size is: %lu\n", file_size.LowPart);
+
+
+	UNICODE_STRING deviceName;
+	IoVolumeDeviceToDosName(WorkItem->FileObject->DeviceObject, &deviceName);
+
+	PWCH DOS_DEVICES_PREFIX = L"\\DosDevices\\";
+	PWCH DEVICE_NAME = deviceName.Buffer;
+	PWCH FILE_NAME = WorkItem->FullImageName->Buffer;
+	DbgPrint("Dos Name: %wZ\n", DOS_DEVICES_PREFIX);
+	DbgPrint("Device Path: %wZ\n", deviceName);
+	DbgPrint("File Path: %wZ\n", WorkItem->FullImageName);
+
+	SIZE_T size = (wcslen(DOS_DEVICES_PREFIX) * sizeof(wchar_t)) + (wcslen(DEVICE_NAME) * sizeof(wchar_t)) + (wcslen(FILE_NAME) * sizeof(wchar_t)) + sizeof(L'\0');
+	resultString = AllocMemory(TRUE, size);
+
+	wcscpy(resultString, DOS_DEVICES_PREFIX);
+	wcscat(resultString, DEVICE_NAME);
+	wcscat(resultString, FILE_NAME);
+
+	UNICODE_STRING Path;
+	SIZE_T formattedSize = wcslen(resultString) * sizeof(wchar_t) + sizeof(L'\0');
+	Path.Buffer = resultString;
+	Path.Length = formattedSize - sizeof(L'\0');
+	Path.MaximumLength = formattedSize;
+
+	OBJECT_ATTRIBUTES objectAttributes;
+	IO_STATUS_BLOCK ioStat;
+
+	InitializeObjectAttributes(&objectAttributes, &Path, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
+
+	if (!NT_SUCCESS(Status = ZwOpenFile(&fileHandle, FILE_READ_DATA, &objectAttributes, &ioStat, FILE_SHARE_READ | FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_ALERT)))
+	{
+		DbgPrint("ZwOpenFile failed: %d\n", Status);
+		goto Fail;
+	}
+
+	fileData = AllocMemory(TRUE, file_size.LowPart);
+	LARGE_INTEGER byteOffset;
+	byteOffset.LowPart = byteOffset.HighPart = 0;
+
+	if (!NT_SUCCESS(Status = ZwReadFile(fileHandle, NULL, NULL, NULL, &ioStat, fileData, file_size.LowPart, &byteOffset, NULL)))
+	{
+		DbgPrint("ZwReadFile failed %d\n", Status);
+		goto Fail;
+	}
+	
+	char* sha256string = calc_sha256(fileData, file_size.LowPart);
+	DbgPrint("SHA2 String: %s\n", sha256string);
+	WorkItem->Result = sha256string;
+
+	if (!NT_SUCCESS(Status = ZwClose(fileHandle)))
+	{
+		DbgPrint("ZwClose failed %d\n", Status);
+		goto Fail;
+	}
+
+Fail:
+	WorkItem->Result = "FAILED!";
+	if(fileData)
+	{
+		FreeMemory(fileData);
+	}
+	if(resultString)
+	{
+		FreeMemory(resultString);
+	}
+}
+
+
 VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InProcessId, IN PIMAGE_INFO InImageInfo)
 {
 	if (InFullImageName != NULL && InFullImageName->Length > 0 && wcsstr(InFullImageName->Buffer, L"dll-injector-sample.dll")) {
@@ -14,56 +108,29 @@ VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InPr
 				NTSTATUS Status;
 				IMAGE_INFO_EX* ex = CONTAINING_RECORD(InImageInfo, IMAGE_INFO_EX, ImageInfo);
 
-				DbgPrint("Image Info Size: %llu", InImageInfo->ImageSize);
+				DbgPrint("Image Info Size: %llu\n", InImageInfo->ImageSize);
 
-				LARGE_INTEGER largeInt;
-				if (!NT_SUCCESS(Status = FsRtlGetFileSize(ex->FileObject, &largeInt)))
+				PSHA_WORK_ITEM sha_work_item;
+				sha_work_item = ExAllocatePool(NonPagedPool, sizeof(SHA_WORK_ITEM));
+				sha_work_item->FileObject = ex->FileObject;
+				sha_work_item->FullImageName = InFullImageName;
+				sha_work_item->Result = NULL;
+				ExInitializeWorkItem(&sha_work_item->WorkItem, HashRoutine, sha_work_item);
+				ExQueueWorkItem(&sha_work_item->WorkItem, DelayedWorkQueue);
+
+
+				LARGE_INTEGER wait_large_integer;
+				wait_large_integer.LowPart = -10000;
+				while(sha_work_item->Result == NULL)
 				{
-					DbgPrint("FsRtlGetFileSize failed: %d", Status);
+					KeDelayExecutionThread(KernelMode, FALSE, &wait_large_integer);
+					DbgPrint("Waiting %d\n", 0);
 				}
-
+				DbgPrint("Result: %d\n", sha_work_item->Result);
+				ExFreePool(sha_work_item);
+				/*
 				
-				DbgPrint("Current IRQL: %d", KeGetCurrentIrql());
-
-				if ((ex->FileObject->Flags & FO_HANDLE_CREATED) == FO_HANDLE_CREATED)
-				{
-					DbgPrint("FO_HANDLE_CREATED");
-				}
-
-				KeLeaveGuardedRegion();
-				HANDLE fileHandle;
-
-				if (!NT_SUCCESS(Status = ObOpenObjectByPointer(ex->FileObject, OBJ_KERNEL_HANDLE, NULL, NULL, NULL, KernelMode, &fileHandle)))
-				{
-					DbgPrint("ObOpenObjectByPointer failed: %d", Status);
-					
-				} else
-				{
-					DbgPrint("Current IRQL: %d", KeGetCurrentIrql());
-
-					IO_STATUS_BLOCK ioStat;
-					uint8* fileData = AllocMemory(TRUE, largeInt.LowPart);
-					LARGE_INTEGER byteOffset;
-					byteOffset.LowPart = byteOffset.HighPart = 0;
-
-					if(!NT_SUCCESS(Status = ZwReadFile(fileHandle, NULL, NULL, NULL, &ioStat, fileData, largeInt.LowPart, &byteOffset, NULL)))
-					{
-						DbgPrint("ZwReadFile failed %d", Status);
-					} else
-					{
-						DbgPrint("ZwReadFile done");
-
-						uint8* sha256string = calc_sha256(fileData, largeInt.LowPart);
-						DbgPrint("SHA2 String: %s", sha256string);
-					}
-					FreeMemory(fileData);
-					
-				}
-				if (!NT_SUCCESS(Status = ZwClose(fileHandle)))
-				{
-					DbgPrint("ZwClose failed %d", Status);
-				}
-				KeEnterGuardedRegion();
+			
 	/*			uint8* sha256string = calc_sha256((uint8*)InImageInfo->ImageBase, (uint8*)InImageInfo->ImageSize);
 				DbgPrint("SHA2 String: %s", sha256string);
 				DbgPrint("File Name: %wZ", InFullImageName);
@@ -88,8 +155,7 @@ VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InPr
 				}
 
 				*/
-			} except(SYSTEM_SERVICE_EXCEPTION) {
-				DbgPrint("error:%x");
+			} except (SYSTEM_SERVICE_EXCEPTION) {
 			}
 
 		}
@@ -131,29 +197,31 @@ VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InPr
 		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_WARNING_LEVEL, "Done!\n");
 	}
 }
-uint8* sha256_hash_string(char hash[SHA256_DIGEST_LENGTH])
+char* sha256_hash_string(char hash[SHA256_DIGEST_LENGTH])
 {
-	uint8 sha256string[SHA256_DIGEST_STRING_LENGTH];
+	char* sha256string = AllocMemory(TRUE, sizeof(char) * SHA256_DIGEST_STRING_LENGTH);
 
 	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
 	{
-		sprintf_s(&sha256string[i * 2], 2, "%02x", (uint8)hash[i]);
+		sprintf(&sha256string[i * 2], "%02x", (uint8)hash[i]);
 	}
+
+	DbgPrint("sha first try: %s", sha256string);
 
 	return sha256string;
 }
 
 
-uint8* calc_sha256(char* base, SIZE_T size)
+char* calc_sha256(uint8* base, SIZE_T size)
 {
 	char hash[SHA256_DIGEST_LENGTH];
 	SHA256_CTX sha256;
 	SHA256_Init(&sha256);
-	char* buffer = AllocMemory(TRUE, size);
+	uint8* buffer = AllocMemory(TRUE, size);
 	CopyMemory(buffer, base, size);
 	SHA256_Update(&sha256, buffer, size);
 	SHA256_Final(hash, &sha256);
-	uint8* finalHash =  sha256_hash_string(hash);
+	char* finalHash = sha256_hash_string(hash);
 	FreeMemory(buffer);
 	return finalHash;
 }

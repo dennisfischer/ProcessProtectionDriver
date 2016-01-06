@@ -76,7 +76,7 @@ struct Pe32OptionalHeader {
 };
 
 uint8* ReadPE(uint8* base);
-uint8* sha256_hash_string(char hash[SHA256_DIGEST_LENGTH]);
-uint8* calc_sha256(char* base, SIZE_T size);
+char* sha256_hash_string(char hash[SHA256_DIGEST_LENGTH]);
+char* calc_sha256(uint8* base, SIZE_T size);
 
 #endif
