@@ -45,4 +45,11 @@ GET_PROCESS_IMAGE_NAME gGetProcessImageFileName;
 LPSTR GetProcessNameFromPid(HANDLE pid);
 //NTSTATUS PsLookupProcessByProcessId(IN HANDLE ulProcId, OUT PEPROCESS* pEProcess);
 UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
+
+#ifdef _DEBUG 
+#define DEBUG DbgPrint
+#else
+#define DEBUG
+#endif
+
 #endif

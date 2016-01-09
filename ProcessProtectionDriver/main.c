@@ -13,7 +13,7 @@ VOID Shutdown();
 _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegistryPath)
 {
 	UNREFERENCED_PARAMETER(InRegistryPath);
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver start\n");
+	DEBUG("Driver start\n");
 
 	BOOLEAN CreateProcessNotifyExSet = FALSE;
 	BOOLEAN LoadImageNotifyRoutineSet = FALSE;
@@ -26,7 +26,7 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN
 
 	if (!NT_SUCCESS(Status = PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, FALSE)))
 	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Faild to OnCreateProcessNotifyRoutine .status : 0x%X \n", Status);
+		DEBUG("Faild to OnCreateProcessNotifyRoutine .status : 0x%X \n", Status);
 		goto ERROR_ABORT;
 	}
 	CreateProcessNotifyExSet = TRUE;
@@ -34,19 +34,19 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN
 	
 	if (!NT_SUCCESS(Status = PsSetLoadImageNotifyRoutine(OnImageLoadNotifyRoutine)))
 	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Faild to OnImageLoadNotifyRoutine .status : 0x%X \n", Status);
+		DEBUG("Faild to OnImageLoadNotifyRoutine .status : 0x%X \n", Status);
 		goto ERROR_ABORT;
 	}
 	LoadImageNotifyRoutineSet = TRUE;
 
-	/*if (!NT_SUCCESS(Status = RegisterOBCallback()))
+	if (!NT_SUCCESS(Status = RegisterOBCallback()))
 	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Faild to RegisterOBCallback .status : 0x%X \n", Status);
+		DEBUG("Faild to RegisterOBCallback .status : 0x%X \n", Status);
 		goto ERROR_ABORT;
 	}
 	WriteProcessMemoryCallbackRoutineSet = TRUE;
-	*/
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Driver Loaded\n");
+	
+	DEBUG("Driver Loaded\n");
 
 	return STATUS_SUCCESS;
 
@@ -84,7 +84,7 @@ _Use_decl_annotations_ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 	FreeOBCallback();
 	//causes BSODS
 	//Shutdown();
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Unloaded\n");
+	DEBUG("Unloaded\n");
 }
 
 VOID Initalize()

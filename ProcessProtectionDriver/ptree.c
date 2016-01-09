@@ -4,17 +4,17 @@ PLIST_ENTRY	PListHead;
 
 VOID InitializePTree()
 {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Init PTree\n");
+	DEBUG("Init PTree\n");
 
 	PListHead = AllocMemory(TRUE, sizeof(LIST_ENTRY));
 	InitializeListHead(PListHead);
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Init PTree\n");
+	DEBUG("Exit Init PTree\n");
 }
 
 VOID RemoveChildren(PPROCESS_LIST_ENTRY entry)
 {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Remove Children PTree\n");
+	DEBUG("Remove Children PTree\n");
 
 	PLIST_ENTRY childHead = entry->ChildHead;
 	PLIST_ENTRY child = childHead;
@@ -27,12 +27,12 @@ VOID RemoveChildren(PPROCESS_LIST_ENTRY entry)
 	}
 	FreeMemory(entry->ChildHead);
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Remove Children PTree\n");
+	DEBUG("Exit Remove Children PTree\n");
 }
 
 VOID DestroyPTree()
 {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Destroy PTree\n");
+	DEBUG("Destroy PTree\n");
 
 	PLIST_ENTRY entry = PListHead;
 	while (PListHead != entry->Flink)
@@ -44,13 +44,13 @@ VOID DestroyPTree()
 		FreeMemory(record);
 	}
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Destroy PTree\n");
+	DEBUG("Exit Destroy PTree\n");
 }
 
 //Inserts a new parent pid
 VOID InsertPidToTree(ULONG InPid)
 {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Insert PTree\n");
+	DEBUG("Insert PTree\n");
 
 	//Check if tree already contains parent and return
 	PLIST_ENTRY entry = PListHead;
@@ -59,7 +59,7 @@ VOID InsertPidToTree(ULONG InPid)
 		entry = entry->Flink;
 		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InPid)
 		{
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Insert PTree\n");
+			DEBUG("Exit Insert PTree\n");
 			return;
 		}
 	}
@@ -71,13 +71,13 @@ VOID InsertPidToTree(ULONG InPid)
 	InitializeListHead(newEntry->ChildHead);
 	InsertHeadList(PListHead, &(newEntry->ListEntry));
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Insert PTree\n");
+	DEBUG("Exit Insert PTree\n");
 }
 
 //Adds a child pid to an existing parent pid entry
 VOID AddChildPidToTree(ULONG InParentPid, ULONG InChildPid)
 {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "AddChild PTree\n");
+	DEBUG("AddChild PTree\n");
 
 	//First find parent
 	PLIST_ENTRY entry = PListHead;
@@ -95,7 +95,7 @@ VOID AddChildPidToTree(ULONG InParentPid, ULONG InChildPid)
 				child = child->Flink;
 				if (CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->Pid == InChildPid)
 				{
-					DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit AddChild PTree\n");
+					DEBUG("Exit AddChild PTree\n");
 					return;
 				}
 			}
@@ -108,13 +108,13 @@ VOID AddChildPidToTree(ULONG InParentPid, ULONG InChildPid)
 		}
 	}
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit AddChild PTree\n");
+	DEBUG("Exit AddChild PTree\n");
 }
 
 //Finds and removes PID from tree
 VOID RemovePidFromTree(ULONG InPid)
 {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Remove Pid PTree\n");
+	DEBUG("Remove Pid PTree\n");
 
 	//First, quickly check parents
 	PLIST_ENTRY entry = PListHead;
@@ -129,7 +129,7 @@ VOID RemovePidFromTree(ULONG InPid)
 			RemoveChildren(record);
 			RemoveEntryList(entry);
 			FreeMemory(record);
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Pid PTree\n");
+			DEBUG("Exit Pid PTree\n");
 			return;
 		}
 	}
@@ -153,19 +153,19 @@ VOID RemovePidFromTree(ULONG InPid)
 				//Just remove child
 				RemoveEntryList(child);
 				FreeMemory(record);
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Pid PTree\n");
+				DEBUG("Exit Pid PTree\n");
 				return;
 			}
 		}
 	}
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Pid PTree\n");
+	DEBUG("Exit Pid PTree\n");
 }
 
 //Finds PID inside the tree
 ULONG FindPidInTree(ULONG InPid)
 {
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Find Pid PTree\n");
+	DEBUG("Find Pid PTree\n");
 
 	//First, quickly check parents
 	PLIST_ENTRY entry = PListHead;
@@ -175,7 +175,7 @@ ULONG FindPidInTree(ULONG InPid)
 
 		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InPid)
 		{
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Find Pid PTree\n");
+			DEBUG("Exit Find Pid PTree\n");
 			return InPid;
 		}
 	}
@@ -193,12 +193,12 @@ ULONG FindPidInTree(ULONG InPid)
 			child = child->Flink;
 			if (CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->Pid == InPid)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Find Pid PTree\n");
+				DEBUG("Exit Find Pid PTree\n");
 				return CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->ParentPid;
 			}
 		}
 	}
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Exit Find Pid PTree\n");
+	DEBUG("Exit Find Pid PTree\n");
 	return 0;
 }

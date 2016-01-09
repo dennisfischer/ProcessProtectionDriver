@@ -12,7 +12,7 @@ LPSTR GetProcessNameFromPid(HANDLE pid);
 OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  POB_PRE_OPERATION_INFORMATION InPreInfo)
 {
 	UNREFERENCED_PARAMETER(InRegistrationContext);
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "PreProcCreateRoutine. \n");
+	DEBUG("PreProcCreateRoutine. \n");
 
 
 	PEPROCESS OpenedProcess = (PEPROCESS)InPreInfo->Object;
@@ -29,7 +29,7 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 	//Names don't match
 	if (_stricmp(OpenedProcName, "chrome.exe"))
 	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Not requested onto chrome: %s?\n", OpenedProcName);
+		DEBUG("Not requested onto chrome: %s?\n", OpenedProcName);
 		goto Exit;
 	}
 
@@ -51,23 +51,23 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 		ULONG openedPid = FindPidInTree(HandleToLong(PsGetProcessId(OpenedProcess)));
 
 		if (currentPid == openedPid) {
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Self access: %s -> %s\n", OpenedProcName, TargetProcName);
+			DEBUG("Self access: %s -> %s\n", OpenedProcName, TargetProcName);
 			UnlockMutex(GlobalMutex);
 			goto Exit;
 		}
 		UnlockMutex(GlobalMutex);
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "UNALLOWED access: %s -> %s\n", OpenedProcName, TargetProcName);
+		DEBUG("UNALLOWED access: %s -> %s\n", OpenedProcName, TargetProcName);
 
 	}
 
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Requested onto chrome from: %s!\n", GetProcessNameFromPid(PsGetCurrentProcessId()));
+	DEBUG("Requested onto chrome from: %s!\n", GetProcessNameFromPid(PsGetCurrentProcessId()));
 
 	switch (InPreInfo->Operation)
 	{
 	case OB_OPERATION_HANDLE_CREATE:
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Requested access is: %x\n", InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
+		DEBUG("Requested access is: %x\n", InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
 		InPreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_WRITE);
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Access changed to: %x\n", InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
+		DEBUG("Access changed to: %x\n", InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
 		break;
 	default:
 		TD_ASSERT(FALSE);
@@ -86,7 +86,7 @@ VOID ObjectPostCallback(IN  PVOID InRegistrationContext, IN  POB_POST_OPERATION_
 {
 	UNREFERENCED_PARAMETER(InRegistrationContext);
 	UNREFERENCED_PARAMETER(InPostInfo);
-	DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "PostProcCreateRoutine. \n");
+	DEBUG("PostProcCreateRoutine. \n");
 }
 
 //
@@ -109,7 +109,7 @@ NTSTATUS RegisterOBCallback()
 	RegistrationContext.Version = 120;
 	if (filterVersion == OB_FLT_REGISTRATION_VERSION)
 	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Filter Version is correct.\n");
+		DEBUG("Filter Version is correct.\n");
 
 		RegisterOperation.ObjectType = PsProcessType;
 		RegisterOperation.Operations = OB_OPERATION_HANDLE_CREATE;
@@ -121,38 +121,38 @@ NTSTATUS RegisterOBCallback()
 		RegisterCallBack.Altitude = Altitude;
 		RegisterCallBack.RegistrationContext = &RegistrationContext;
 		RegisterCallBack.OperationRegistration = &RegisterOperation;
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Register Callback Function Entry.\n");
+		DEBUG("Register Callback Function Entry.\n");
 
 
 		ntStatus = ObRegisterCallbacks(&RegisterCallBack, &OB_CALLBACK_HANDLE);
 		if (ntStatus == STATUS_SUCCESS)
 		{
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_INFO_LEVEL, "Register Callback Function Successful.\n");
+			DEBUG("Register Callback Function Successful.\n");
 		}
 		else
 		{
 			if (ntStatus == STATUS_FLT_INSTANCE_ALTITUDE_COLLISION)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Status Filter Instance Altitude Collision.\n");
+				DEBUG("Status Filter Instance Altitude Collision.\n");
 			}
 			if (ntStatus == STATUS_INVALID_PARAMETER)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Status Invalid Parameter.\n");
+				DEBUG("Status Invalid Parameter.\n");
 			}
 			if (ntStatus == STATUS_ACCESS_DENIED)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "The callback routines do not reside in a signed kernel binary image.\n");
+				DEBUG("The callback routines do not reside in a signed kernel binary image.\n");
 			}
 			if (ntStatus == STATUS_INSUFFICIENT_RESOURCES)
 			{
-				DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Status Allocate Memory Failed.\n");
+				DEBUG("Status Allocate Memory Failed.\n");
 			}
-			DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Register Callback Function Failed with 0x%08x\n", ntStatus);
+			DEBUG("Register Callback Function Failed with 0x%08x\n", ntStatus);
 		}
 	}
 	else
 	{
-		DbgPrintEx(DPFLTR_IHVDRIVER_ID, DPFLTR_ERROR_LEVEL, "Filter Version is not supported.\n");
+		DEBUG("Filter Version is not supported.\n");
 	}
 	return ntStatus;
 }
