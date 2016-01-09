@@ -94,7 +94,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <ClCompile>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <ExceptionHandling>
       </ExceptionHandling>
       <PreprocessorDefinitions>_WIN64;_AMD64_;AMD64;DRIVER=1;X64_DRIVER;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -112,7 +112,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <ClCompile>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <ExceptionHandling>
       </ExceptionHandling>
       <PreprocessorDefinitions>_WIN64;_AMD64_;AMD64;DRIVER=1;X64_DRIVER;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -130,7 +130,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <ClCompile>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <ExceptionHandling>
       </ExceptionHandling>
       <PreprocessorDefinitions>_X86_=1;i386=1;DRIVER=1;STD_CALL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -148,7 +148,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <ClCompile>
-      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <ExceptionHandling>
       </ExceptionHandling>
       <PreprocessorDefinitions>_X86_=1;i386=1;DRIVER=1;STD_CALL;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -187,6 +187,8 @@
     <ClInclude Include="common.h" />
     <ClInclude Include="image_load_routine.h" />
     <ClInclude Include="memory.h" />
+    <ClInclude Include="obcallback_routine.h" />
+    <ClInclude Include="proc_create_routine.h" />
     <ClInclude Include="ptree.h" />
     <ClInclude Include="sha2.h" />
     <ClInclude Include="stdafx.h" />

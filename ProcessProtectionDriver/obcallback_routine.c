@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
 PVOID OB_CALLBACK_HANDLE = NULL;
-
-OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  POB_PRE_OPERATION_INFORMATION InPreInfo);
-VOID ObjectPostCallback(IN  PVOID InRegistrationContext, IN  POB_POST_OPERATION_INFORMATION InPostInfo);
-LPSTR GetProcessNameFromPid(HANDLE pid);
+OB_OPERATION_REGISTRATION CBOperationRegistrations[2] = { { 0 },{ 0 } };
+OB_CALLBACK_REGISTRATION CBCallbackRegistration = { 0 };
+OB_CALLBACK_REGISTRATION  CBObRegistration = { 0 };
+REG_CONTEXT RegistrationContext = { 0 };
 
 //
 // PRE OPERATION
@@ -13,7 +13,6 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 {
 	UNREFERENCED_PARAMETER(InRegistrationContext);
 	DEBUG("PreProcCreateRoutine. \n");
-
 
 	PEPROCESS OpenedProcess = (PEPROCESS)InPreInfo->Object;
 	PEPROCESS CurrentProcess = PsGetCurrentProcess();
@@ -66,7 +65,7 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 	{
 	case OB_OPERATION_HANDLE_CREATE:
 		DEBUG("Requested access is: %x\n", InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
-		InPreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_WRITE);
+	//	InPreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_WRITE);
 		DEBUG("Access changed to: %x\n", InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
 		break;
 	default:
@@ -92,68 +91,38 @@ VOID ObjectPostCallback(IN  PVOID InRegistrationContext, IN  POB_POST_OPERATION_
 //
 // REGISTER CALLBACK FUNCTION
 //
-
 NTSTATUS RegisterOBCallback()
 {
 	NTSTATUS ntStatus = STATUS_SUCCESS;
-	UNICODE_STRING Altitude;
-	USHORT filterVersion = ObGetFilterVersion();
-	USHORT registrationCount = 1;
-	OB_OPERATION_REGISTRATION RegisterOperation;
-	OB_CALLBACK_REGISTRATION RegisterCallBack;
-	REG_CONTEXT RegistrationContext;
-	memset(&RegisterOperation, 0, sizeof(OB_OPERATION_REGISTRATION));
-	memset(&RegisterCallBack, 0, sizeof(OB_CALLBACK_REGISTRATION));
-	memset(&RegistrationContext, 0, sizeof(REG_CONTEXT));
-	RegistrationContext.ulIndex = 1;
-	RegistrationContext.Version = 120;
-	if (filterVersion == OB_FLT_REGISTRATION_VERSION)
-	{
+
+
 		DEBUG("Filter Version is correct.\n");
 
-		RegisterOperation.ObjectType = PsProcessType;
-		RegisterOperation.Operations = OB_OPERATION_HANDLE_CREATE;
-		RegisterOperation.PreOperation = ObjectPreCallback;
-		RegisterOperation.PostOperation = ObjectPostCallback;
-		RegisterCallBack.Version = OB_FLT_REGISTRATION_VERSION;
-		RegisterCallBack.OperationRegistrationCount = registrationCount;
+		CBOperationRegistrations[0].ObjectType = PsProcessType;
+		CBOperationRegistrations[0].Operations = OB_OPERATION_HANDLE_CREATE;
+		CBOperationRegistrations[0].PreOperation = ObjectPreCallback;
+		CBOperationRegistrations[0].PostOperation = ObjectPostCallback;
+
+		UNICODE_STRING Altitude;
 		RtlInitUnicodeString(&Altitude, L"1000");
-		RegisterCallBack.Altitude = Altitude;
-		RegisterCallBack.RegistrationContext = &RegistrationContext;
-		RegisterCallBack.OperationRegistration = &RegisterOperation;
+		CBObRegistration.Altitude = Altitude;
+		CBObRegistration.Version = OB_FLT_REGISTRATION_VERSION;
+		CBObRegistration.OperationRegistrationCount = 1;
+		CBObRegistration.RegistrationContext = &CBCallbackRegistration;
+		CBObRegistration.OperationRegistration = CBOperationRegistrations;
 		DEBUG("Register Callback Function Entry.\n");
 
 
-		ntStatus = ObRegisterCallbacks(&RegisterCallBack, &OB_CALLBACK_HANDLE);
+		ntStatus = ObRegisterCallbacks(&CBObRegistration, &OB_CALLBACK_HANDLE);
 		if (ntStatus == STATUS_SUCCESS)
 		{
 			DEBUG("Register Callback Function Successful.\n");
 		}
 		else
 		{
-			if (ntStatus == STATUS_FLT_INSTANCE_ALTITUDE_COLLISION)
-			{
-				DEBUG("Status Filter Instance Altitude Collision.\n");
-			}
-			if (ntStatus == STATUS_INVALID_PARAMETER)
-			{
-				DEBUG("Status Invalid Parameter.\n");
-			}
-			if (ntStatus == STATUS_ACCESS_DENIED)
-			{
-				DEBUG("The callback routines do not reside in a signed kernel binary image.\n");
-			}
-			if (ntStatus == STATUS_INSUFFICIENT_RESOURCES)
-			{
-				DEBUG("Status Allocate Memory Failed.\n");
-			}
 			DEBUG("Register Callback Function Failed with 0x%08x\n", ntStatus);
 		}
-	}
-	else
-	{
-		DEBUG("Filter Version is not supported.\n");
-	}
+
 	return ntStatus;
 }
 

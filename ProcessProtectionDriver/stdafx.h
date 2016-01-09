@@ -11,6 +11,8 @@
 #include "ptree.h"
 #include "sha2.h"
 #include "image_load_routine.h"
+#include "proc_create_routine.h"
+#include "obcallback_routine.h"
 #include <Ntstrsafe.h>
 
 #define TD_ASSERT(_exp) \

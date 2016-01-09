@@ -49,6 +49,12 @@
     <ClInclude Include="image_load_routine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="proc_create_routine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="obcallback_routine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Inf Include="ProcessProtectionDriver.inf">

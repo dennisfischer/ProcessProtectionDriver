@@ -4,7 +4,7 @@
 #ifndef _DEBUG
 #pragma optimize ("", off) // suppress _memset
 #endif
-VOID ZeroMemory(PVOID InTarget,	ULONG InByteCount)
+VOID ZeroMemory(PVOID InTarget, ULONG InByteCount)
 {
 	ULONG Index;
 	UCHAR* Target = (UCHAR*)InTarget;
@@ -31,15 +31,15 @@ PVOID AllocMemory(BOOLEAN InZeroMemory, ULONG InSize)
 
 VOID FreeMemory(PVOID InPointer)
 {
-	if (IsPointerValid(InPointer)) {
+	if (IsPointerValid(InPointer))
+	{
 		ExFreePool(InPointer);
 	}
 }
 
 VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
 {
-	memcpy(InDest, InSource, InByteCount);
-	/*ULONG Index;
+	ULONG Index;
 	UCHAR* Dest = (UCHAR*)InDest;
 	UCHAR* Src = (UCHAR*)InSource;
 
@@ -49,7 +49,7 @@ VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
 
 		Dest++;
 		Src++;
-	}*/
+	}
 }
 
 BOOLEAN IsPointerValid(PVOID InPtr)
@@ -73,7 +73,6 @@ VOID UnlockMutex(PKGUARDED_MUTEX InMutex)
 
 #if X64_DRIVER
 // Write Protection Off
-_IRQL_raises_(DISPATCH_LEVEL)
 KIRQL RtlWPOff()
 {
 	// prevent rescheduling 
@@ -86,6 +85,7 @@ KIRQL RtlWPOff()
 	_disable();
 	return irql;
 }
+
 //Write Protection On
 void RtlWPOn(KIRQL irql)
 {
