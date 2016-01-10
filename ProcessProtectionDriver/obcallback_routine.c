@@ -1,10 +1,10 @@
 #include "stdafx.h"
 
 PVOID OB_CALLBACK_HANDLE = NULL;
-OB_OPERATION_REGISTRATION CBOperationRegistrations[2] = { { 0 },{ 0 } };
-OB_CALLBACK_REGISTRATION CBCallbackRegistration = { 0 };
-OB_CALLBACK_REGISTRATION  CBObRegistration = { 0 };
-REG_CONTEXT RegistrationContext = { 0 };
+OB_OPERATION_REGISTRATION CBOperationRegistrations[2] = {{0},{0}};
+OB_CALLBACK_REGISTRATION CBCallbackRegistration = {0};
+OB_CALLBACK_REGISTRATION CBObRegistration = {0};
+REG_CONTEXT RegistrationContext = {0};
 
 //
 // PRE OPERATION
@@ -45,22 +45,22 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 		ULONG currentPid = FindPidInTree(HandleToLong(PsGetCurrentProcessId()));
 		ULONG openedPid = FindPidInTree(HandleToLong(PsGetProcessId(OpenedProcess)));
 
-		if (currentPid == openedPid) {
-			DEBUG("Self access: %s -> %s\n", OpenedProcName, TargetProcName);
+		if (currentPid == openedPid)
+		{
+			DEBUG("Self access: %s -> %s\n" , OpenedProcName , TargetProcName);
 			goto Exit;
 		}
-		DEBUG("UNALLOWED access: %s -> %s\n", OpenedProcName, TargetProcName);
-
+		DEBUG("UNALLOWED access: %s -> %s\n" , OpenedProcName , TargetProcName);
 	}
 
-	DEBUG("Requested onto chrome from: %s!\n", GetProcessNameFromPid(PsGetCurrentProcessId()));
+	DEBUG("Requested onto chrome from: %s!\n" , GetProcessNameFromPid(PsGetCurrentProcessId()));
 
 	switch (InPreInfo->Operation)
 	{
 	case OB_OPERATION_HANDLE_CREATE:
-		DEBUG("Requested access is: %x\n", InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
-	//	InPreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_WRITE);
-		DEBUG("Access changed to: %x\n", InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
+		DEBUG("Requested access is: %x\n" , InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
+		//	InPreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_WRITE);
+		DEBUG("Access changed to: %x\n" , InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
 		break;
 	default:
 		TD_ASSERT(FALSE);
@@ -89,32 +89,32 @@ NTSTATUS RegisterOBCallback()
 	NTSTATUS ntStatus = STATUS_SUCCESS;
 
 
-		DEBUG("Filter Version is correct.\n");
+	DEBUG("Filter Version is correct.\n");
 
-		CBOperationRegistrations[0].ObjectType = PsProcessType;
-		CBOperationRegistrations[0].Operations = OB_OPERATION_HANDLE_CREATE;
-		CBOperationRegistrations[0].PreOperation = ObjectPreCallback;
-		CBOperationRegistrations[0].PostOperation = ObjectPostCallback;
+	CBOperationRegistrations[0].ObjectType = PsProcessType;
+	CBOperationRegistrations[0].Operations = OB_OPERATION_HANDLE_CREATE;
+	CBOperationRegistrations[0].PreOperation = ObjectPreCallback;
+	CBOperationRegistrations[0].PostOperation = ObjectPostCallback;
 
-		UNICODE_STRING Altitude;
-		RtlInitUnicodeString(&Altitude, L"1000");
-		CBObRegistration.Altitude = Altitude;
-		CBObRegistration.Version = OB_FLT_REGISTRATION_VERSION;
-		CBObRegistration.OperationRegistrationCount = 1;
-		CBObRegistration.RegistrationContext = &CBCallbackRegistration;
-		CBObRegistration.OperationRegistration = CBOperationRegistrations;
-		DEBUG("Register Callback Function Entry.\n");
+	UNICODE_STRING Altitude;
+	RtlInitUnicodeString(&Altitude, L"1000");
+	CBObRegistration.Altitude = Altitude;
+	CBObRegistration.Version = OB_FLT_REGISTRATION_VERSION;
+	CBObRegistration.OperationRegistrationCount = 1;
+	CBObRegistration.RegistrationContext = &CBCallbackRegistration;
+	CBObRegistration.OperationRegistration = CBOperationRegistrations;
+	DEBUG("Register Callback Function Entry.\n");
 
 
-		ntStatus = ObRegisterCallbacks(&CBObRegistration, &OB_CALLBACK_HANDLE);
-		if (ntStatus == STATUS_SUCCESS)
-		{
-			DEBUG("Register Callback Function Successful.\n");
-		}
-		else
-		{
-			DEBUG("Register Callback Function Failed with 0x%08x\n", ntStatus);
-		}
+	ntStatus = ObRegisterCallbacks(&CBObRegistration, &OB_CALLBACK_HANDLE);
+	if (ntStatus == STATUS_SUCCESS)
+	{
+		DEBUG("Register Callback Function Successful.\n");
+	}
+	else
+	{
+		DEBUG("Register Callback Function Failed with 0x%08x\n" , ntStatus);
+	}
 
 	return ntStatus;
 }
@@ -131,7 +131,7 @@ NTSTATUS FreeOBCallback()
 		ObUnRegisterCallbacks(OB_CALLBACK_HANDLE);
 		OB_CALLBACK_HANDLE = NULL;
 	}
-	return STATUS_SUCCESS;
+	return STATUS_SUCCESS ;
 }
 
 LPSTR GetProcessNameFromPid(HANDLE pid)
@@ -144,3 +144,4 @@ LPSTR GetProcessNameFromPid(HANDLE pid)
 	}
 	return (LPSTR)PsGetProcessImageFileName(Process);
 }
+

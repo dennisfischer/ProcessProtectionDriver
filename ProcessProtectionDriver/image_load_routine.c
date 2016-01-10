@@ -42,8 +42,8 @@ void PatchRoutine(PVOID Parameter)
 
 	DbgPrint("DLL! %p\n", WorkItem->ImageBase);
 	DbgPrint("Entry! %p\n", entryPointAbs);
-//	uint8 patch[] = {0xC3};
-//	CopyMemory(entryPointAbs, patch, sizeof(patch));
+	uint8 patch[] = {0xC3};
+	CopyMemory(entryPointAbs, patch, sizeof(patch));
 #ifdef X64_DRIVER
 	RtlWPOn(CurrentIRQL);
 #endif
@@ -127,10 +127,10 @@ void HashRoutine(PVOID Parameter)
 		wcsncat(resultString, DEVICE_NAME, deviceName.Length / sizeof(wchar_t));
 		wcsncat(resultString, FILE_NAME, WorkItem->FullImageName->Length / sizeof(wchar_t));
 
-		DEBUG("Dos Name: %S\n", DOS_DEVICES_PREFIX);
-		DEBUG("Device Path: %wZ\n", deviceName);
-		DEBUG("File Path (L: %d, M:%d): %wZ\n", WorkItem->FullImageName->Length, WorkItem->FullImageName->MaximumLength, WorkItem->FullImageName);
-		DEBUG("Concated Path (%d): %S\n", wcslen(FILE_NAME), resultString);
+		DEBUG("Dos Name: %S\n" , DOS_DEVICES_PREFIX);
+		DEBUG("Device Path: %wZ\n" , deviceName);
+		DEBUG("File Path (L: %d, M:%d): %wZ\n" , WorkItem->FullImageName->Length , WorkItem->FullImageName->MaximumLength , WorkItem->FullImageName);
+		DEBUG("Concated Path (%d): %S\n" , wcslen(FILE_NAME) , resultString);
 
 		goto BuildPath;
 
@@ -144,7 +144,7 @@ void HashRoutine(PVOID Parameter)
 		DEBUG("Full Path now is: %wZ\n" , &Path);
 		if (!NT_SUCCESS(Status = TryGetFileHanlde(&Path, &fileHandle)))
 		{
-			DEBUG("ZwOpenFile failed: %d\n", Status);
+			DEBUG("ZwOpenFile failed: %d\n" , Status);
 			goto Fail;
 		}
 
@@ -152,14 +152,14 @@ void HashRoutine(PVOID Parameter)
 		LARGE_INTEGER file_size;
 		if (!NT_SUCCESS(Status = GetFileSize(WorkItem->FileObject, &file_size)))
 		{
-			DEBUG("FsRtlGetFileSize failed: %d\n", Status);
+			DEBUG("FsRtlGetFileSize failed: %d\n" , Status);
 			goto Fail;
 		}
-		DEBUG("File size is: %lu\n", file_size.LowPart);
+		DEBUG("File size is: %lu\n" , file_size.LowPart);
 		fileData = AllocMemory(TRUE, file_size.LowPart);
 		if (!NT_SUCCESS(Status = ReadFile(fileHandle, file_size.LowPart, fileData)))
 		{
-			DEBUG("ZwReadFile failed %d\n", Status);
+			DEBUG("ZwReadFile failed %d\n" , Status);
 			goto Fail;
 		}
 
@@ -170,7 +170,7 @@ void HashRoutine(PVOID Parameter)
 	Done:
 		FreeMemory(fileData);
 		fileData = NULL;
-		
+
 		FreeMemory(resultString);
 		resultString = NULL;
 	}
@@ -189,7 +189,6 @@ void HashRoutine(PVOID Parameter)
 
 VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InProcessId, IN PIMAGE_INFO InImageInfo)
 {
-
 	//Should the dll get loaded into a chrome process?
 	if (FindPidInTree(HandleToULong(InProcessId)) == 0)
 	{
@@ -202,18 +201,14 @@ VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InPr
 		}
 
 		//No - then do nothing
-		DEBUG("Not tracked: PID: %d ImageName: %wZ\n", HandleToLong(InProcessId), InFullImageName);
+		DEBUG("Not tracked: PID: %d ImageName: %wZ\n" , HandleToLong(InProcessId) , InFullImageName);
 		goto Allow;
 	}
 Check:
 	//Is this a dll file?
-	if (InFullImageName->Length/2 < wcslen(L"dll") || wcsncmp(&InFullImageName->Buffer[InFullImageName->Length/2 - wcslen(L"dll")], L"dll", wcslen(L"dll")) != 0)
+	if (InFullImageName->Length / 2 < wcslen(L"dll") || wcsncmp(&InFullImageName->Buffer[InFullImageName->Length / 2 - wcslen(L"dll")], L"dll", wcslen(L"dll")) != 0)
 	{
-		DEBUG("Not a DLL ImageName: %wZ\n", InFullImageName);
-		DEBUG("HAVE Length: %d\n", InFullImageName->Length);
-		DEBUG("HAVE MaxLength: %d\n", InFullImageName->MaximumLength);
-		DEBUG("HAVE CountedLength: %d\n", wcslen(InFullImageName->Buffer));
-		DEBUG("Extension of File: %S\n", &InFullImageName->Buffer[wcslen(InFullImageName->Buffer) - wcslen(L"dll")]);
+		DEBUG("Not a DLL ImageName: %wZ\n" , InFullImageName);
 		//No - then do nothing
 		goto Allow;
 	}
@@ -226,62 +221,58 @@ Check:
 	}
 	IMAGE_INFO_EX* ex = CONTAINING_RECORD(InImageInfo, IMAGE_INFO_EX, ImageInfo);
 
-	try
+	DEBUG("Image Info Size: %llu\n" , InImageInfo->ImageSize);
+
+	PSHA_WORK_ITEM sha_work_item = AllocMemory(TRUE, sizeof(SHA_WORK_ITEM));
+	if (sha_work_item == NULL)
 	{
-		DEBUG("Image Info Size: %llu\n" , InImageInfo->ImageSize);
+		goto Deny;
+	}
+	sha_work_item->FileObject = ex->FileObject;
+	sha_work_item->FullImageName = InFullImageName;
+	sha_work_item->Result = NULL;
+	sha_work_item->Allow = FALSE;
+	sha_work_item->Done = FALSE;
+	ExInitializeWorkItem(&sha_work_item->WorkItem, HashRoutine, sha_work_item);
+	ExQueueWorkItem(&sha_work_item->WorkItem, CriticalWorkQueue);
 
-		PSHA_WORK_ITEM sha_work_item = ExAllocatePoolWithTag(NonPagedPool, sizeof(SHA_WORK_ITEM), 'PROT');
-		if (sha_work_item == NULL)
-		{
-			goto Deny;
-		}
-		sha_work_item->FileObject = ex->FileObject;
-		sha_work_item->FullImageName = InFullImageName;
-		sha_work_item->Result = NULL;
-		sha_work_item->Allow = FALSE;
-		sha_work_item->Done = FALSE;
-		ExInitializeWorkItem(&sha_work_item->WorkItem, HashRoutine, sha_work_item);
-		ExQueueWorkItem(&sha_work_item->WorkItem, CriticalWorkQueue);
+	LARGE_INTEGER wait_large_integer;
+	wait_large_integer.QuadPart = -100000;
+	while (sha_work_item->Done == FALSE)
+	{
+		KeDelayExecutionThread(KernelMode, FALSE, &wait_large_integer);
+	}
 
-		LARGE_INTEGER wait_large_integer;
-		wait_large_integer.QuadPart = -100000;
-		while (sha_work_item->Done == FALSE)
-		{
-			KeDelayExecutionThread(KernelMode, FALSE, &wait_large_integer);
-		}
+	if (sha_work_item->Allow == TRUE)
+	{
+		goto Allow;
+	}
+	if (sha_work_item->Result == NULL)
+	{
+		DEBUG("Something went wrong, deny load!");
+		goto Deny;
+	}
 
-		if (sha_work_item->Allow == TRUE)
+	int length = sizeof(WHITELIST) / sizeof(WHITELIST[0]);
+	for (int i = 0; i < length; i++)
+	{
+		if (strcmp(sha_work_item->Result, WHITELIST[i]) == 0)
 		{
+			DEBUG("EQUAL!\n");
 			goto Allow;
 		}
-		if (sha_work_item->Result == NULL)
-		{
-			DEBUG("Something went wrong, deny load!");
-			goto Deny;
-		}
-
-		int length = sizeof(WHITELIST) / sizeof(WHITELIST[0]);
-		for (int i = 0; i < length; i++)
-		{
-			if (strcmp(sha_work_item->Result, WHITELIST[i]) == 0)
-			{
-				DEBUG("EQUAL!\n");
-				goto Allow;
-			}
-		}
-
-		DEBUG("NOT EQUAL!\n");
-		DbgPrint("\"%s\", // %wZ\n", sha_work_item->Result, InFullImageName);
-
-		ExFreePool(sha_work_item);
-		goto Deny;
-	} except (SYSTEM_SERVICE_EXCEPTION)
-	{
 	}
+
+	DEBUG("NOT EQUAL!\n");
+	DbgPrint("\"%s\", // %wZ\n", sha_work_item->Result, InFullImageName);
+
+	FreeMemory(sha_work_item);
+	sha_work_item = NULL;
+	goto Deny;
 
 Deny:
 
-	PPATCH_WORK_ITEM patch_work_item = ExAllocatePoolWithTag(NonPagedPool, sizeof(PATCH_WORK_ITEM), 'PROT');
+	PPATCH_WORK_ITEM patch_work_item = AllocMemory(TRUE, sizeof(PATCH_WORK_ITEM));
 	if (patch_work_item == NULL)
 	{
 		goto Deny;
@@ -298,8 +289,8 @@ Deny:
 	{
 		KeDelayExecutionThread(KernelMode, FALSE, &wait_large_integer);
 	}
-	ExFreePool(patch_work_item);
-	
+	FreeMemory(patch_work_item);
+
 
 	DEBUG("Deny!\n");
 Allow:

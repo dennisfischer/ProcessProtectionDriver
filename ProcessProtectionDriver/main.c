@@ -26,29 +26,29 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN
 
 	if (!NT_SUCCESS(Status = PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, FALSE)))
 	{
-		DEBUG("Faild to OnCreateProcessNotifyRoutine .status : 0x%X \n", Status);
+		DEBUG("Faild to OnCreateProcessNotifyRoutine .status : 0x%X \n" , Status);
 		goto ERROR_ABORT;
 	}
 	CreateProcessNotifyExSet = TRUE;
 
-	
+
 	if (!NT_SUCCESS(Status = PsSetLoadImageNotifyRoutine(OnImageLoadNotifyRoutine)))
 	{
-		DEBUG("Faild to OnImageLoadNotifyRoutine .status : 0x%X \n", Status);
+		DEBUG("Faild to OnImageLoadNotifyRoutine .status : 0x%X \n" , Status);
 		goto ERROR_ABORT;
 	}
 	LoadImageNotifyRoutineSet = TRUE;
 
 	if (!NT_SUCCESS(Status = RegisterOBCallback()))
 	{
-		DEBUG("Faild to RegisterOBCallback .status : 0x%X \n", Status);
+		DEBUG("Faild to RegisterOBCallback .status : 0x%X \n" , Status);
 		goto ERROR_ABORT;
 	}
 	WriteProcessMemoryCallbackRoutineSet = TRUE;
-	
+
 	DEBUG("Driver Loaded\n");
 
-	return STATUS_SUCCESS;
+	return STATUS_SUCCESS ;
 
 ERROR_ABORT:
 
@@ -64,7 +64,7 @@ ERROR_ABORT:
 		TD_ASSERT(Status == STATUS_SUCCESS);
 	}
 
-	if(WriteProcessMemoryCallbackRoutineSet)
+	if (WriteProcessMemoryCallbackRoutineSet)
 	{
 		FreeOBCallback();
 	}
@@ -83,7 +83,7 @@ _Use_decl_annotations_ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
 	FreeOBCallback();
 	//causes BSODS
-	Shutdown();
+	//Shutdown();
 	DEBUG("Unloaded\n");
 }
 
@@ -97,3 +97,4 @@ VOID Shutdown()
 {
 	DestroyPTree();
 }
+

@@ -39,7 +39,7 @@ typedef struct _OB_REG_CONTEXT
 //-----------------------------------------------
 // PID2ProcName
 //-----------------------------------------------
-typedef PCHAR(*GET_PROCESS_IMAGE_NAME)(PEPROCESS Process);
+typedef PCHAR (*GET_PROCESS_IMAGE_NAME)(PEPROCESS Process);
 GET_PROCESS_IMAGE_NAME gGetProcessImageFileName;
 
 LPSTR GetProcessNameFromPid(HANDLE pid);
@@ -53,3 +53,4 @@ UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
 #endif
 
 #endif
+

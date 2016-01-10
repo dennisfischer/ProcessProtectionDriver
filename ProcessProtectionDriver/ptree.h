@@ -5,7 +5,8 @@
 #endif
 #include "stdafx.h"
 
-struct _PROCESS_LIST_ENTRY {
+struct _PROCESS_LIST_ENTRY
+{
 	LIST_ENTRY ListEntry;
 	ULONG Pid;
 	PLIST_ENTRY ChildHead;
@@ -31,3 +32,4 @@ VOID InsertPidToTree(ULONG pid);
 VOID RemovePidFromTree(ULONG pid);
 ULONG FindPidInTree(ULONG pid);
 #endif
+

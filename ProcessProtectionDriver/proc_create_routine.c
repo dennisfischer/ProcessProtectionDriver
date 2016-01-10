@@ -11,14 +11,14 @@ VOID OnCreateProcessNotifyRoutine(PEPROCESS InProcess, HANDLE InProcessId, PPS_C
 		return;
 	}
 	//Is this a chrome.exe process
-	if (InCreateInfo->ImageFileName->Length/2 > wcslen(L"chrome.exe") && wcsncmp(&InCreateInfo->ImageFileName->Buffer[InCreateInfo->ImageFileName->Length/2 - wcslen(L"chrome.exe")], L"chrome.exe", wcslen(L"chrome.exe")) == 0)
+	if (InCreateInfo->ImageFileName->Length / 2 > wcslen(L"chrome.exe") && wcsncmp(&InCreateInfo->ImageFileName->Buffer[InCreateInfo->ImageFileName->Length / 2 - wcslen(L"chrome.exe")], L"chrome.exe", wcslen(L"chrome.exe")) == 0)
 	{
 		RegisterProcessInTree(InCreateInfo->ParentProcessId, InProcessId);
 	}
-	DEBUG("HAVE Length: %d\n", InCreateInfo->ImageFileName->Length);
-	DEBUG("HAVE MaxLength: %d\n", InCreateInfo->ImageFileName->MaximumLength);
-	DEBUG("HAVE CountedLength: %d\n", wcslen(InCreateInfo->ImageFileName->Buffer));
-	DEBUG("HAVE: %S\n", &InCreateInfo->ImageFileName->Buffer[InCreateInfo->ImageFileName->Length/2 - wcslen(L"chrome.exe")]);
+	DEBUG("HAVE Length: %d\n" , InCreateInfo->ImageFileName->Length);
+	DEBUG("HAVE MaxLength: %d\n" , InCreateInfo->ImageFileName->MaximumLength);
+	DEBUG("HAVE CountedLength: %d\n" , wcslen(InCreateInfo->ImageFileName->Buffer));
+	DEBUG("HAVE: %S\n" , &InCreateInfo->ImageFileName->Buffer[InCreateInfo->ImageFileName->Length / 2 - wcslen(L"chrome.exe")]);
 	DEBUG("PID : %d (%d)  ImageName :%wZ CmdLine : %wZ \n" ,
 		HandleToLong(InProcessId) , HandleToLong(InCreateInfo->ParentProcessId) ,
 		InCreateInfo->ImageFileName ,
@@ -33,13 +33,14 @@ VOID RegisterProcessInTree(HANDLE InParentProcessId, HANDLE InProcessId)
 	{
 		//No - add child to process tree
 		AddChildPidToTree((ULONG)HandleToLong(InParentProcessId), HandleToLong(InProcessId));
-		DEBUG("CHILD: %d\n", InProcessId);
+		DEBUG("CHILD: %d\n" , InProcessId);
 	}
 	else
 	{
 		//Yes - add parent to process tree
 		InsertPidToTree((ULONG)HandleToLong(InProcessId));
 
-		DEBUG("PARENT: %d\n", InProcessId);
+		DEBUG("PARENT: %d\n" , InProcessId);
 	}
 }
+

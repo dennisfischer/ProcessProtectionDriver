@@ -3,6 +3,7 @@
 
 #ifndef _DEBUG
 #pragma optimize ("", off) // suppress _memset
+
 #endif
 VOID ZeroMemory(PVOID InTarget, ULONG InByteCount)
 {
@@ -31,7 +32,8 @@ PVOID AllocMemory(BOOLEAN InZeroMemory, ULONG InSize)
 
 VOID FreeMemory(PVOID InPointer)
 {
-	if (InPointer != NULL) {
+	if (InPointer != NULL)
+	{
 		ExFreePoolWithTag(InPointer, 'PROT');
 	}
 }
@@ -79,3 +81,4 @@ void RtlWPOn(KIRQL irql)
 	KeLowerIrql(irql);
 }
 #endif
+

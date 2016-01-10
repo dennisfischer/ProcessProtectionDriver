@@ -8,3 +8,4 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 VOID ObjectPostCallback(IN  PVOID InRegistrationContext, IN  POB_POST_OPERATION_INFORMATION InPostInfo);
 LPSTR GetProcessNameFromPid(HANDLE pid);
 #endif
+

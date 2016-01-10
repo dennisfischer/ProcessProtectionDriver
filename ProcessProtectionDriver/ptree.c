@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-PLIST_ENTRY	PListHead;
+PLIST_ENTRY PListHead;
 PKSPIN_LOCK PTreeSpinLock;
 
 VOID InitializePTree()
@@ -158,7 +158,7 @@ VOID RemovePidFromTree(ULONG InPid)
 
 				//Just remove child
 				RemoveEntryList(child);
-				
+
 				FreeMemory(record);
 				record = NULL;
 				KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
@@ -211,3 +211,4 @@ ULONG FindPidInTree(ULONG InPid)
 	KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 	return 0;
 }
+

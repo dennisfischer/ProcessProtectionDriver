@@ -8,7 +8,8 @@ typedef unsigned char uint8;
 typedef unsigned short uint16;
 typedef unsigned int uint32;
 
-struct MzHeader {
+struct MzHeader
+{
 	uint16 magic; /* == 0x5a4D */
 	uint16 bytesInLastBlock;
 	uint16 blocksInFile;
@@ -27,10 +28,11 @@ struct MzHeader {
 	uint16 oemID;
 	uint16 oemInfo;
 	uint16 reserved2[10];
-	uint32 lfaNew;	// PE Address
+	uint32 lfaNew; // PE Address
 };
 
-struct PeHeader {
+struct PeHeader
+{
 	uint32 magic; // 0x4550
 	uint16 machine;
 	uint16 numberOfSections;
@@ -41,10 +43,11 @@ struct PeHeader {
 	uint16 characteristics;
 };
 
-struct Pe32OptionalHeader {
+struct Pe32OptionalHeader
+{
 	uint16 magic; // 0x010b - PE32, 0x020b - PE32+ (64 bit)
-	uint8  majorLinkerVersion;
-	uint8  minorLinkerVersion;
+	uint8 majorLinkerVersion;
+	uint8 minorLinkerVersion;
 	uint32 sizeOfCode;
 	uint32 sizeOfInitializedData;
 	uint32 sizeOfUninitializedData;
@@ -79,3 +82,4 @@ char* sha256_hash_string(char hash[SHA256_DIGEST_LENGTH]);
 char* calc_sha256(uint8* base, ULONG size);
 
 #endif
+
