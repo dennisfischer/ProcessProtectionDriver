@@ -15,10 +15,6 @@ VOID OnCreateProcessNotifyRoutine(PEPROCESS InProcess, HANDLE InProcessId, PPS_C
 	{
 		RegisterProcessInTree(InCreateInfo->ParentProcessId, InProcessId);
 	}
-	DEBUG("HAVE Length: %d\n" , InCreateInfo->ImageFileName->Length);
-	DEBUG("HAVE MaxLength: %d\n" , InCreateInfo->ImageFileName->MaximumLength);
-	DEBUG("HAVE CountedLength: %d\n" , wcslen(InCreateInfo->ImageFileName->Buffer));
-	DEBUG("HAVE: %S\n" , &InCreateInfo->ImageFileName->Buffer[InCreateInfo->ImageFileName->Length / 2 - wcslen(L"chrome.exe")]);
 	DEBUG("PID : %d (%d)  ImageName :%wZ CmdLine : %wZ \n" ,
 		HandleToLong(InProcessId) , HandleToLong(InCreateInfo->ParentProcessId) ,
 		InCreateInfo->ImageFileName ,
@@ -39,7 +35,6 @@ VOID RegisterProcessInTree(HANDLE InParentProcessId, HANDLE InProcessId)
 	{
 		//Yes - add parent to process tree
 		InsertPidToTree((ULONG)HandleToLong(InProcessId));
-
 		DEBUG("PARENT: %d\n" , InProcessId);
 	}
 }

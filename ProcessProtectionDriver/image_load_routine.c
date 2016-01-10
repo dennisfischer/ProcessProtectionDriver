@@ -283,7 +283,6 @@ Deny:
 	ExInitializeWorkItem(&patch_work_item->WorkItem, PatchRoutine, patch_work_item);
 	ExQueueWorkItem(&patch_work_item->WorkItem, CriticalWorkQueue);
 
-	LARGE_INTEGER wait_large_integer;
 	wait_large_integer.QuadPart = -100000;
 	while (patch_work_item->Done == FALSE)
 	{
