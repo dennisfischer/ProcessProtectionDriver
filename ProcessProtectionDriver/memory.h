@@ -8,14 +8,11 @@
 PVOID AllocMemory(BOOLEAN InZeroMemory, ULONG InSize);
 VOID FreeMemory(PVOID InPointer);
 VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount);
-BOOLEAN IsPointerValid(PVOID InPtr);
 VOID ZeroMemory(PVOID InTarget,	ULONG InByteCount);
 
-VOID LockMutex(PKGUARDED_MUTEX InMutex);
-VOID UnlockMutex(PKGUARDED_MUTEX InMutex);
 #ifdef X64_DRIVER
-#include "intrin.h"
-KIRQL RtlWPOff();
-void RtlWPOn(KIRQL irql);
-	#endif
+	#include "intrin.h"
+	KIRQL RtlWPOff();
+	void RtlWPOn(KIRQL irql);
+#endif
 #endif

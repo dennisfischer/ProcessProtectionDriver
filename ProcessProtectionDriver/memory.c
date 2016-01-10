@@ -31,9 +31,8 @@ PVOID AllocMemory(BOOLEAN InZeroMemory, ULONG InSize)
 
 VOID FreeMemory(PVOID InPointer)
 {
-	if (IsPointerValid(InPointer))
-	{
-		ExFreePool(InPointer);
+	if (InPointer != NULL) {
+		ExFreePoolWithTag(InPointer, 'PROT');
 	}
 }
 
@@ -50,25 +49,6 @@ VOID CopyMemory(PVOID InDest, PVOID InSource, ULONG InByteCount)
 		Dest++;
 		Src++;
 	}
-}
-
-BOOLEAN IsPointerValid(PVOID InPtr)
-{
-	if ((InPtr == NULL) || (InPtr == (PVOID)~0))
-		return FALSE;
-	return TRUE;
-}
-
-VOID LockMutex(PKGUARDED_MUTEX InMutex)
-{
-	KeEnterGuardedRegion();
-	KeAcquireGuardedMutex(InMutex);
-}
-
-VOID UnlockMutex(PKGUARDED_MUTEX InMutex)
-{
-	KeReleaseGuardedMutex(InMutex);
-	KeLeaveGuardedRegion();
 }
 
 #if X64_DRIVER

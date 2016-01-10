@@ -1,67 +1,74 @@
 #include "stdafx.h"
 
 PLIST_ENTRY	PListHead;
+PKSPIN_LOCK PTreeSpinLock;
 
 VOID InitializePTree()
 {
-	DEBUG("Init PTree\n");
+	PTreeSpinLock = AllocMemory(TRUE, sizeof(KSPIN_LOCK));
+	KeInitializeSpinLock(PTreeSpinLock);
+
+	KLOCK_QUEUE_HANDLE SpinLockHandle;
+	KeAcquireInStackQueuedSpinLock(PTreeSpinLock, &SpinLockHandle);
 
 	PListHead = AllocMemory(TRUE, sizeof(LIST_ENTRY));
 	InitializeListHead(PListHead);
-
-	DEBUG("Exit Init PTree\n");
+	KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 }
 
 VOID RemoveChildren(PPROCESS_LIST_ENTRY entry)
 {
-	DEBUG("Remove Children PTree\n");
-
 	PLIST_ENTRY childHead = entry->ChildHead;
-	PLIST_ENTRY child = childHead;
+	PLIST_ENTRY child = childHead->Flink;
 	while (childHead != child->Flink)
 	{
-		child = child->Flink;
 		PPROCESS_LIST_ENTRY_CHILD record = CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry);
 		RemoveEntryList(child);
+		child = child->Flink;
 		FreeMemory(record);
+		record = NULL;
 	}
 	FreeMemory(entry->ChildHead);
-
-	DEBUG("Exit Remove Children PTree\n");
+	entry->ChildHead = NULL;
 }
 
 VOID DestroyPTree()
 {
-	DEBUG("Destroy PTree\n");
+	KLOCK_QUEUE_HANDLE SpinLockHandle;
+	KeAcquireInStackQueuedSpinLock(PTreeSpinLock, &SpinLockHandle);
 
-	PLIST_ENTRY entry = PListHead;
+	PLIST_ENTRY entry = PListHead->Flink;
 	while (PListHead != entry->Flink)
 	{
-		entry = entry->Flink;
 		PPROCESS_LIST_ENTRY record = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry);
 		RemoveChildren(record);
 		RemoveEntryList(entry);
+		entry = entry->Flink;
 		FreeMemory(record);
+		record = NULL;
 	}
 
-	DEBUG("Exit Destroy PTree\n");
+	KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
+	FreeMemory(PTreeSpinLock);
+	PTreeSpinLock = NULL;
 }
 
 //Inserts a new parent pid
 VOID InsertPidToTree(ULONG InPid)
 {
-	DEBUG("Insert PTree\n");
+	KLOCK_QUEUE_HANDLE SpinLockHandle;
+	KeAcquireInStackQueuedSpinLock(PTreeSpinLock, &SpinLockHandle);
 
 	//Check if tree already contains parent and return
-	PLIST_ENTRY entry = PListHead;
+	PLIST_ENTRY entry = PListHead->Flink;
 	while (PListHead != entry->Flink)
 	{
-		entry = entry->Flink;
 		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InPid)
 		{
-			DEBUG("Exit Insert PTree\n");
+			KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 			return;
 		}
+		entry = entry->Flink;
 	}
 
 	//Otherwise add new parent list entry
@@ -71,20 +78,19 @@ VOID InsertPidToTree(ULONG InPid)
 	InitializeListHead(newEntry->ChildHead);
 	InsertHeadList(PListHead, &(newEntry->ListEntry));
 
-	DEBUG("Exit Insert PTree\n");
+	KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 }
 
 //Adds a child pid to an existing parent pid entry
 VOID AddChildPidToTree(ULONG InParentPid, ULONG InChildPid)
 {
-	DEBUG("AddChild PTree\n");
+	KLOCK_QUEUE_HANDLE SpinLockHandle;
+	KeAcquireInStackQueuedSpinLock(PTreeSpinLock, &SpinLockHandle);
 
 	//First find parent
-	PLIST_ENTRY entry = PListHead;
+	PLIST_ENTRY entry = PListHead->Flink;
 	while (PListHead != entry->Flink)
 	{
-		entry = entry->Flink;
-
 		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InParentPid)
 		{
 			//Check if child already exists
@@ -95,7 +101,7 @@ VOID AddChildPidToTree(ULONG InParentPid, ULONG InChildPid)
 				child = child->Flink;
 				if (CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->Pid == InChildPid)
 				{
-					DEBUG("Exit AddChild PTree\n");
+					KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 					return;
 				}
 			}
@@ -106,22 +112,22 @@ VOID AddChildPidToTree(ULONG InParentPid, ULONG InChildPid)
 			newEntry->ParentPid = InParentPid;
 			InsertHeadList(childHead, &(newEntry->ListEntry));
 		}
+		entry = entry->Flink;
 	}
 
-	DEBUG("Exit AddChild PTree\n");
+	KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 }
 
 //Finds and removes PID from tree
 VOID RemovePidFromTree(ULONG InPid)
 {
-	DEBUG("Remove Pid PTree\n");
+	KLOCK_QUEUE_HANDLE SpinLockHandle;
+	KeAcquireInStackQueuedSpinLock(PTreeSpinLock, &SpinLockHandle);
 
 	//First, quickly check parents
-	PLIST_ENTRY entry = PListHead;
+	PLIST_ENTRY entry = PListHead->Flink;
 	while (PListHead != entry->Flink)
 	{
-		entry = entry->Flink;
-
 		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InPid)
 		{
 			//Found, remove parent + children
@@ -129,18 +135,18 @@ VOID RemovePidFromTree(ULONG InPid)
 			RemoveChildren(record);
 			RemoveEntryList(entry);
 			FreeMemory(record);
-			DEBUG("Exit Pid PTree\n");
+			record = NULL;
+			KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 			return;
 		}
+		entry = entry->Flink;
 	}
 
 
 	//If not found, check children of all parents
-	entry = PListHead;
+	entry = PListHead->Flink;
 	while (PListHead != entry->Flink)
 	{
-		entry = entry->Flink;
-
 		PLIST_ENTRY childHead = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->ChildHead;
 		PLIST_ENTRY child = childHead;
 		while (childHead != child->Flink)
@@ -152,40 +158,41 @@ VOID RemovePidFromTree(ULONG InPid)
 
 				//Just remove child
 				RemoveEntryList(child);
+				
 				FreeMemory(record);
-				DEBUG("Exit Pid PTree\n");
+				record = NULL;
+				KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 				return;
 			}
 		}
+		entry = entry->Flink;
 	}
 
-	DEBUG("Exit Pid PTree\n");
+	KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 }
 
 //Finds PID inside the tree
 ULONG FindPidInTree(ULONG InPid)
 {
-	DEBUG("Find Pid PTree\n");
+	KLOCK_QUEUE_HANDLE SpinLockHandle;
+	KeAcquireInStackQueuedSpinLock(PTreeSpinLock, &SpinLockHandle);
 
 	//First, quickly check parents
-	PLIST_ENTRY entry = PListHead;
+	PLIST_ENTRY entry = PListHead->Flink;
 	while (PListHead != entry->Flink)
 	{
-		entry = entry->Flink;
-
 		if (CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->Pid == InPid)
 		{
-			DEBUG("Exit Find Pid PTree\n");
+			KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 			return InPid;
 		}
+		entry = entry->Flink;
 	}
 
 	//If not found, check children of all parents
-	entry = PListHead;
+	entry = PListHead->Flink;
 	while (PListHead != entry->Flink)
 	{
-		entry = entry->Flink;
-
 		PLIST_ENTRY childHead = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->ChildHead;
 		PLIST_ENTRY child = childHead;
 		while (childHead != child->Flink)
@@ -194,11 +201,13 @@ ULONG FindPidInTree(ULONG InPid)
 			if (CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->Pid == InPid)
 			{
 				DEBUG("Exit Find Pid PTree\n");
+				KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 				return CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry)->ParentPid;
 			}
 		}
+		entry = entry->Flink;
 	}
 
-	DEBUG("Exit Find Pid PTree\n");
+	KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 	return 0;
 }

@@ -12,7 +12,6 @@ REG_CONTEXT RegistrationContext = { 0 };
 OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  POB_PRE_OPERATION_INFORMATION InPreInfo)
 {
 	UNREFERENCED_PARAMETER(InRegistrationContext);
-	DEBUG("PreProcCreateRoutine. \n");
 
 	PEPROCESS OpenedProcess = (PEPROCESS)InPreInfo->Object;
 	PEPROCESS CurrentProcess = PsGetCurrentProcess();
@@ -28,7 +27,6 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 	//Names don't match
 	if (_stricmp(OpenedProcName, "chrome.exe"))
 	{
-		DEBUG("Not requested onto chrome: %s?\n", OpenedProcName);
 		goto Exit;
 	}
 
@@ -44,17 +42,13 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 
 
 		//FIND / Compare operation here
-		LockMutex(GlobalMutex);
-
 		ULONG currentPid = FindPidInTree(HandleToLong(PsGetCurrentProcessId()));
 		ULONG openedPid = FindPidInTree(HandleToLong(PsGetProcessId(OpenedProcess)));
 
 		if (currentPid == openedPid) {
 			DEBUG("Self access: %s -> %s\n", OpenedProcName, TargetProcName);
-			UnlockMutex(GlobalMutex);
 			goto Exit;
 		}
-		UnlockMutex(GlobalMutex);
 		DEBUG("UNALLOWED access: %s -> %s\n", OpenedProcName, TargetProcName);
 
 	}
@@ -85,7 +79,6 @@ VOID ObjectPostCallback(IN  PVOID InRegistrationContext, IN  POB_POST_OPERATION_
 {
 	UNREFERENCED_PARAMETER(InRegistrationContext);
 	UNREFERENCED_PARAMETER(InPostInfo);
-	DEBUG("PostProcCreateRoutine. \n");
 }
 
 //

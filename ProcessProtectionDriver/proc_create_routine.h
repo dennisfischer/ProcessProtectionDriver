@@ -4,6 +4,6 @@
 #pragma once
 #endif
 #include "stdafx.h"
-VOID RegisterProcessInTree(HANDLE InParentProcessId, HANDLE InProcessId);
 
+VOID RegisterProcessInTree(HANDLE InParentProcessId, HANDLE InProcessId);
 #endif

@@ -169,6 +169,7 @@
     <ClCompile Include="proc_create_routine.c" />
     <ClCompile Include="ptree.c" />
     <ClCompile Include="sha2.c" />
+    <ClCompile Include="whitelist.c" />
   </ItemGroup>
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" Condition="'$(ConfigurationType)'=='Driver' or '$(ConfigurationType)'=='DynamicLibrary'" />
@@ -192,6 +193,7 @@
     <ClInclude Include="ptree.h" />
     <ClInclude Include="sha2.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="whitelist.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

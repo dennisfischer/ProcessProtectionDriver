@@ -14,6 +14,7 @@
 #include "proc_create_routine.h"
 #include "obcallback_routine.h"
 #include <Ntstrsafe.h>
+#include "whitelist.h"
 
 #define TD_ASSERT(_exp) \
     ((!(_exp)) ? \
@@ -24,7 +25,6 @@
 DRIVER_INITIALIZE DriverEntry;
 DRIVER_UNLOAD UnloadRoutine;
 
-PKGUARDED_MUTEX GlobalMutex;
 NTSTATUS RegisterOBCallback();
 NTSTATUS FreeOBCallback();
 VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InProcessId, IN PIMAGE_INFO InImageInfo);

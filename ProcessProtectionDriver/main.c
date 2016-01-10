@@ -83,22 +83,17 @@ _Use_decl_annotations_ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
 	FreeOBCallback();
 	//causes BSODS
-	//Shutdown();
+	Shutdown();
 	DEBUG("Unloaded\n");
 }
 
 VOID Initalize()
 {
 	//Initialize a mutex object so both callbacks don't create any weird race conditions and possibly bsods.
-	GlobalMutex = AllocMemory(TRUE, sizeof(KGUARDED_MUTEX));
-	KeInitializeGuardedMutex(GlobalMutex);
 	InitializePTree();
 }
 
 VOID Shutdown()
 {
 	DestroyPTree();
-	if (IsPointerValid(GlobalMutex)) {
-		FreeMemory(GlobalMutex);
-	}
 }
