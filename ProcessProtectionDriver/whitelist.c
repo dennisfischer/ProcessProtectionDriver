@@ -1,5 +1,5 @@
 #include "stdafx.h"
-char* WHITELIST[210] = {"5d88697613ba650495e9ea4f9142bbd09d46dd51512109e0f4ea07f054f6359f",
+char* WHITELIST[238] = { "5d88697613ba650495e9ea4f9142bbd09d46dd51512109e0f4ea07f054f6359f",
 	"694cf94e8e102216d227ae39edc5f0724c9b1d0b4ad586d41040b0ba453223c4",
 	"824202b392e9467f024067006b08258ba2f87b9367af3a95b756a99cbd5bc198",
 	"8494f7b1b241a9c4121b78a01d756ca5e93417261e5e6e109728093b980c7b99",
@@ -209,5 +209,34 @@ char* WHITELIST[210] = {"5d88697613ba650495e9ea4f9142bbd09d46dd51512109e0f4ea07f
 	"de045595d405663b55fddf179c080f9f871f0fdff3d7f90856332328b95e0834", // \Windows\SysWOW64\UIAutomationCore.dll
 	"9be85a7a096758b8a74337561d038b21cfe2e55011199ce0ba6d710591ed64a6", // \Windows\SysWOW64\sxs.dll
 	"1595887fa72397b5070699eecdd1a0dcc5dedf1d46e25f000a9c4d6ba18634e6", // \Program Files (x86)\Google\Chrome\Application\47.0.2526.106\libexif.dll
+	//Windows 7
+	"b7a268eb4c53969dddd123690d367b7a1d19384037d7f417a18137eecb8f0cbd", // \SystemRoot\System32\ntdll.dll
+	"15c2238c9e4d5b64a493b1e460d9c5f425f0ab464138ce116b53797d227f8a5a", // \SystemRoot\SysWOW64\ntdll.dll
+	"72d95e8406bc834cbc363c8bbcbac9499b436bb10815a18a0026322bc6ad683f", // \Windows\SysWOW64\kernel32.dll
+	"3928165890e1e9f57e53d9d1b0dfb54f7a36886cb76a4f81d18010662884bc2c", // \Windows\System32\user32.dll
+	"4f68f1a49bf3e97d032b40250f362a488fdb38c05686f9fb4d47c856b507d7c0", // \Windows\SysWOW64\KernelBase.dll
+	"ad61db4df59907c7e0a7b85176e9a54f2de4d67495af047a1f9af1fd5426470a", // \Windows\SysWOW64\advapi32.dll
+	"051636bfdff7ab0e4191354e846bd0dacca1a01fcc13c1afed91d8dbfe17127a", // \Windows\SysWOW64\msvcrt.dll
+	"3d2e4cb0956d30307fe6440e4fca0e327dcd2643113860be526383e7934a495c", // \Windows\SysWOW64\sechost.dll
+	"a1668bc492938b2a68744bda9db7461577ad0de67811fb9fa1aa3e56cda327c1", // \Windows\SysWOW64\rpcrt4.dll
+	"1ead1b33e2398a25bcea7795a4fe38a7ec2a62013469d23adb69f8c106ba33db", // \Windows\SysWOW64\cryptbase.dll
+	"0a887d800b4c6ef07ec318364d719c14b4563a9c5254e4c62ab766f3e5fcca73", // \Windows\SysWOW64\user32.dll
+	"d13ca6b60093ada10ad3823e3672e370cbfb48e55ac7fb3fbfb4b330fac97e8b", // \Windows\SysWOW64\gdi32.dll
+	"6b3e439588b9d5aa0607445653f0c7a37d673b571892293b096bf50f9e276605", // \Windows\SysWOW64\usp10.dll
+	"33cc8b140b0e4a9b702e3468be2646aee4273f20c6ea5bac6c3d8fc8edef0881", // \Windows\SysWOW64\profapi.dll
+	"68c8af0cc1923e3a7245392f2480ee665d265df300a609d2540bf7c6d9c1a1be", // \Windows\SysWOW64\imm32.dll
+	"4ca82b2581f417d8d6d81f446f81283d3de91c8e8e0bc2dc3da4cf8d55e765f5", // \Windows\SysWOW64\msctf.dll
+	"4e65b519821552d3b02736883b695c4953e9ddea1a61f22ff37d67dbba7bbd4d", // \Windows\SysWOW64\shell32.dll
+	"1d326d7d116d76876ee2b14a5bfb7b4328e21db9b5aaab9cb67f8efb93924230", // \Windows\SysWOW64\shlwapi.dll
+	"c37e8a2df20978761662ffd9dfe51dc787519b7920b406851ca3fc2417270b79", // \Windows\SysWOW64\ole32.dll
+	"2d824c66a97fc8c39dafa397cc47495b712d175eef393486946da8936bdd466a", // \Windows\SysWOW64\psapi.dll
+	"cff8f44791b0fc19bd2659f58497a021486429dc6390da985c612109d386b991", // \Windows\SysWOW64\crypt32.dll
+	"902000ee51efeabaf6a4b30f880aa37083d2232c6fc622ca513c4a823390feda", // \Windows\SysWOW64\msasn1.dll
+	"3fb82988aab66813567e8db951d4ee87f156201070f005fdbf52ef998a323e65", // \Windows\SysWOW64\nsi.dll
+	"acb756ea54e71f124d928829666b5b439785593877ff7c0c76adcf954f4e6c94", // \Windows\SysWOW64\Wldap32.dll
+	"3b0d73c50d40a6f42629b7750f99f656bf5c1c50237d5f98b6c0f2ce5e2da359", // \Windows\SysWOW64\clbcatq.dll
+	"6cda17da9b44d11e69f7c6682fa633ea75731623bb21b429a0fe2086ed4495a7", // \Windows\SysWOW64\setupapi.dll
+	"209ff1b6d46d1ac99518fcf54f2f726143b2dbf2c5fda90212fbef7526f7cbf5", // \Windows\SysWOW64\devobj.dll
+	"3c8bf3f0c08c7fa8de5cd9c60ad9d00b742e84eb1febeeba0f7159844baaa471", // \Windows\SysWOW64\cfgmgr32.dll
 };
 

@@ -77,6 +77,31 @@ struct Pe32OptionalHeader
 	uint32 numberOfRvaAndSizes;
 };
 
+typedef struct _SHA_WORK_ITEM
+{
+	WORK_QUEUE_ITEM WorkItem;
+	PFILE_OBJECT FileObject;
+	PUNICODE_STRING FullImageName;
+	char* Result;
+	BOOLEAN Done;
+	BOOLEAN Allow;
+} SHA_WORK_ITEM, *PSHA_WORK_ITEM;
+
+
+typedef struct _PATCH_WORK_ITEM
+{
+	WORK_QUEUE_ITEM WorkItem;
+	uint8* ImageBase;
+	SIZE_T ImageSize;
+	HANDLE ProcessId;
+	BOOLEAN Done;
+} PATCH_WORK_ITEM, *PPATCH_WORK_ITEM;
+
+NTSTATUS TryGetFileHanlde(PUNICODE_STRING Path, PHANDLE fileHandle);
+NTSTATUS ReadFile(HANDLE fileHandle, ULONG file_size, uint8* fileData);
+NTSTATUS GetFileSize(PFILE_OBJECT fileObject, PLARGE_INTEGER file_size);
+void HashRoutine(PVOID Parameter);
+void PatchRoutine(PVOID Parameter);
 uint8* ReadPE(uint8* base);
 char* sha256_hash_string(char hash[SHA256_DIGEST_LENGTH]);
 char* calc_sha256(uint8* base, ULONG size);

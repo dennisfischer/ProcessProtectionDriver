@@ -16,6 +16,7 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 	PEPROCESS OpenedProcess = (PEPROCESS)InPreInfo->Object;
 	PEPROCESS CurrentProcess = PsGetCurrentProcess();
 
+
 	if (OpenedProcess == CurrentProcess)
 	{
 		goto Exit;
@@ -59,7 +60,7 @@ OB_PREOP_CALLBACK_STATUS ObjectPreCallback(IN PVOID InRegistrationContext, IN  P
 	{
 	case OB_OPERATION_HANDLE_CREATE:
 		DEBUG("Requested access is: %x\n" , InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
-		//	InPreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_WRITE);
+		InPreInfo->Parameters->CreateHandleInformation.DesiredAccess &= ~(PROCESS_VM_WRITE);
 		DEBUG("Access changed to: %x\n" , InPreInfo->Parameters->CreateHandleInformation.DesiredAccess);
 		break;
 	default:
