@@ -5,11 +5,11 @@ VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InPr
 	//Should the dll get loaded into a chrome process?
 	if (FindPidInTree(HandleToULong(InProcessId)) == 0)
 	{
-		//Maybe we're just coming early into this routine - check if we can insert initial parent
-		//Is this a chrome.exe process
-		if (InFullImageName->Length > wcslen(L"chrome.exe") && wcsncmp(&InFullImageName->Buffer[InFullImageName->Length - wcslen(L"chrome.exe")], L"chrome.exe", wcslen(L"chrome.exe")) == 0)
+		//Maybe we're just coming early into this routine - check if this is a chrome.exe process
+		LPSTR OpenedProcName = GetProcessNameFromPid(InProcessId);
+
+		if (strcmp(OpenedProcName, "chrome.exe") == 0)
 		{
-			RegisterProcessInTree(NULL, InProcessId);
 			goto Check;
 		}
 
