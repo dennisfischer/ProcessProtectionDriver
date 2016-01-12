@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
-
+//Most of this functions are from EasyHook @https://github.com/EasyHook/EasyHook
+//They copy runtime library behavior for better usage in a driver
 #ifndef _DEBUG
 #pragma optimize ("", off) // suppress _memset
 

@@ -7,4 +7,3 @@
 
 VOID RegisterProcessInTree(HANDLE InParentProcessId, HANDLE InProcessId);
 #endif
-

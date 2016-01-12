@@ -1,15 +1,10 @@
 #include "stdafx.h"
 
-// code by Behrooz @http://stackoverflow.com/questions/20552300/hook-zwterminateprocess-in-x64-driver-without-ssdt
-// code by EasyHook @https://github.com/EasyHook/EasyHook
-// heavily modified to fit purpose of this thesis
+_Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegistryPath);
+_Use_decl_annotations_ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject);
 
-NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegistryPath);
-VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject);
-
-VOID Initalize();
-VOID Shutdown();
-
+//Entry Point to the driver.
+//Initializes all 3 parts
 _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN PUNICODE_STRING InRegistryPath)
 {
 	UNREFERENCED_PARAMETER(InRegistryPath);
@@ -20,10 +15,13 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN
 	BOOLEAN WriteProcessMemoryCallbackRoutineSet = FALSE;
 	NTSTATUS Status = STATUS_SUCCESS;
 
+	//Set unload routine of driver
 	InDriverObject->DriverUnload = UnloadRoutine;
 
-	Initalize();
+	//Initialize a mutex object so both callbacks don't create any weird race conditions and possibly bsods.
+	InitializePTree();
 
+	//Register process creation callback
 	if (!NT_SUCCESS(Status = PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, FALSE)))
 	{
 		DEBUG("Faild to OnCreateProcessNotifyRoutine .status : 0x%X \n" , Status);
@@ -31,7 +29,7 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN
 	}
 	CreateProcessNotifyExSet = TRUE;
 
-
+	//Register image (exe, dll) load callback
 	if (!NT_SUCCESS(Status = PsSetLoadImageNotifyRoutine(OnImageLoadNotifyRoutine)))
 	{
 		DEBUG("Faild to OnImageLoadNotifyRoutine .status : 0x%X \n" , Status);
@@ -39,6 +37,7 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN
 	}
 	LoadImageNotifyRoutineSet = TRUE;
 
+	//Register OpenProcess(used for WriteProcessMemory) callback
 	if (!NT_SUCCESS(Status = RegisterOBCallback()))
 	{
 		DEBUG("Faild to RegisterOBCallback .status : 0x%X \n" , Status);
@@ -47,21 +46,19 @@ _Use_decl_annotations_ NTSTATUS DriverEntry(IN PDRIVER_OBJECT InDriverObject, IN
 	WriteProcessMemoryCallbackRoutineSet = TRUE;
 
 	DEBUG("Driver Loaded\n");
-
-	return STATUS_SUCCESS ;
+	return STATUS_SUCCESS;
 
 ERROR_ABORT:
 
+	//Something went wrong, just unload the parts that were already loaded
 	if (CreateProcessNotifyExSet)
 	{
-		Status = PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
-		TD_ASSERT(Status == STATUS_SUCCESS);
+		PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
 	}
 
 	if (LoadImageNotifyRoutineSet)
 	{
-		Status = PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
-		TD_ASSERT(Status == STATUS_SUCCESS);
+		PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
 	}
 
 	if (WriteProcessMemoryCallbackRoutineSet)
@@ -69,32 +66,19 @@ ERROR_ABORT:
 		FreeOBCallback();
 	}
 
-	Shutdown();
+	//Destroy the existing process tree and free memory
+	DestroyPTree();
 	return Status;
 }
 
-//
-// Unload routine
-//
+//Unload routine
 _Use_decl_annotations_ VOID UnloadRoutine(IN PDRIVER_OBJECT InDriverObject)
 {
 	UNREFERENCED_PARAMETER(InDriverObject);
+	//Unload all registered callbacks and destroy process tree
 	PsSetCreateProcessNotifyRoutineEx(OnCreateProcessNotifyRoutine, TRUE);
 	PsRemoveLoadImageNotifyRoutine(OnImageLoadNotifyRoutine);
 	FreeOBCallback();
-	//causes BSODS
-	//Shutdown();
+	DestroyPTree();
 	DEBUG("Unloaded\n");
 }
-
-VOID Initalize()
-{
-	//Initialize a mutex object so both callbacks don't create any weird race conditions and possibly bsods.
-	InitializePTree();
-}
-
-VOID Shutdown()
-{
-	DestroyPTree();
-}
-

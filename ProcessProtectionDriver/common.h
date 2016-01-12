@@ -4,7 +4,7 @@
 #pragma once
 #endif
 #include "stdafx.h"
-// coded by Behrooz @http://stackoverflow.com/questions/20552300/hook-zwterminateprocess-in-x64-driver-without-ssdt
+//Some code of this file is from Behrooz @http://stackoverflow.com/questions/20552300/hook-zwterminateprocess-in-x64-driver-without-ssdt
 
 //-----------------------------------------------
 //  Defines
@@ -46,6 +46,7 @@ LPSTR GetProcessNameFromPid(HANDLE pid);
 //NTSTATUS PsLookupProcessByProcessId(IN HANDLE ulProcId, OUT PEPROCESS* pEProcess);
 UCHAR* PsGetProcessImageFileName(IN PEPROCESS Process);
 
+//Define the Debug macro
 #ifdef _DEBUG 
 #define DEBUG DbgPrint
 #else

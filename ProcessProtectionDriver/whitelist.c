@@ -1,4 +1,6 @@
 #include "stdafx.h"
+
+//Whitelist file - the following char array contains sha256 hashes of "all" required DLL files
 char* WHITELIST[238] = { "5d88697613ba650495e9ea4f9142bbd09d46dd51512109e0f4ea07f054f6359f",
 	"694cf94e8e102216d227ae39edc5f0724c9b1d0b4ad586d41040b0ba453223c4",
 	"824202b392e9467f024067006b08258ba2f87b9367af3a95b756a99cbd5bc198",

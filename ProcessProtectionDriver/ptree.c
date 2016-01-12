@@ -1,8 +1,12 @@
 #include "stdafx.h"
 
+//List Head
 PLIST_ENTRY PListHead;
+//SpinLock (busy waiting Lock) for thread synchronization
+//Mutexes might lead to context change, so busy waiting is overall faster
 PKSPIN_LOCK PTreeSpinLock;
 
+//Setups the process tree
 VOID InitializePTree()
 {
 	PTreeSpinLock = AllocMemory(TRUE, sizeof(KSPIN_LOCK));
@@ -11,17 +15,21 @@ VOID InitializePTree()
 	KLOCK_QUEUE_HANDLE SpinLockHandle;
 	KeAcquireInStackQueuedSpinLock(PTreeSpinLock, &SpinLockHandle);
 
+	//Init list head
 	PListHead = AllocMemory(TRUE, sizeof(LIST_ENTRY));
 	InitializeListHead(PListHead);
 	KeReleaseInStackQueuedSpinLock(&SpinLockHandle);
 }
 
+//Removes all children of a given parent process
 VOID RemoveChildren(PPROCESS_LIST_ENTRY entry)
 {
+	//Iterate through list
 	PLIST_ENTRY childHead = entry->ChildHead;
 	PLIST_ENTRY child = childHead->Flink;
 	while (childHead != child->Flink)
 	{
+		//Get child, free memory and remove list entry
 		PPROCESS_LIST_ENTRY_CHILD record = CONTAINING_RECORD(child, PROCESS_LIST_ENTRY_CHILD, ListEntry);
 		RemoveEntryList(child);
 		child = child->Flink;
@@ -32,14 +40,17 @@ VOID RemoveChildren(PPROCESS_LIST_ENTRY entry)
 	entry->ChildHead = NULL;
 }
 
+//Destroys the process tree during driver unload
 VOID DestroyPTree()
 {
 	KLOCK_QUEUE_HANDLE SpinLockHandle;
 	KeAcquireInStackQueuedSpinLock(PTreeSpinLock, &SpinLockHandle);
 
+	//Delete all parents
 	PLIST_ENTRY entry = PListHead->Flink;
 	while (PListHead != entry->Flink)
 	{
+		//Get parent, delete childs, free memory and remove list entry
 		PPROCESS_LIST_ENTRY record = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry);
 		RemoveChildren(record);
 		RemoveEntryList(entry);
@@ -147,6 +158,7 @@ VOID RemovePidFromTree(ULONG InPid)
 	entry = PListHead->Flink;
 	while (PListHead != entry->Flink)
 	{
+		//Is PID part of children?
 		PLIST_ENTRY childHead = CONTAINING_RECORD(entry, PROCESS_LIST_ENTRY, ListEntry)->ChildHead;
 		PLIST_ENTRY child = childHead;
 		while (childHead != child->Flink)
