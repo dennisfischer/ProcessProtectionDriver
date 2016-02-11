@@ -5,135 +5,144 @@
 //LdrLoadLoaderLock is held, so memory modifications should only occur in a work-item
 VOID OnImageLoadNotifyRoutine(IN PUNICODE_STRING InFullImageName, IN HANDLE InProcessId, IN PIMAGE_INFO InImageInfo)
 {
-	//Should the dll get loaded into a chrome process?
-	if (FindPidInTree(HandleToULong(InProcessId)) == 0)
+	__try
 	{
-		//Maybe we're just coming early into this routine - check if this is a chrome.exe process
-		LPSTR OpenedProcName = GetProcessNameFromPid(InProcessId);
-
-		if (strcmp(OpenedProcName, "chrome.exe") == 0)
+		//Should the dll get loaded into a chrome process?
+		if (FindPidInTree(HandleToULong(InProcessId)) == 0)
 		{
-			//This is a chrome process, check if the dlls are okay.
-			goto Check;
-		}
+			//Maybe we're just coming early into this routine - check if this is a chrome.exe process
+			LPSTR OpenedProcName = GetProcessNameFromPid(InProcessId);
 
-		//No - then do nothing
-		DEBUG("Not tracked: PID: %d ImageName: %wZ\n" , HandleToLong(InProcessId) , InFullImageName);
-		goto Allow;
-	}
-Check:
-	//Is this a dll file?
-	if (InFullImageName->Length / 2 < wcslen(L"dll") || wcsncmp(&InFullImageName->Buffer[InFullImageName->Length / 2 - wcslen(L"dll")], L"dll", wcslen(L"dll")) != 0)
-	{
-		DEBUG("Not a DLL ImageName: %wZ\n" , InFullImageName);
-		//No - then do nothing
-		goto Allow;
-	}
+			if (strcmp(OpenedProcName, "chrome.exe") == 0)
+			{
+				//This is a chrome process, check if the dlls are okay.
+				goto Check;
+			}
 
-	DEBUG("Malicious DLL Sample - PID: %d ImageName: %wZ\n" , HandleToLong(InProcessId) , InFullImageName);
-
-	//Was this DLL loaded from a file?
-	if (!InImageInfo->ExtendedInfoPresent)
-	{
-		//No, then we can't check its hash -> deny
-		goto Deny;
-	}
-
-	//Get the extended information
-	IMAGE_INFO_EX* ex = CONTAINING_RECORD(InImageInfo, IMAGE_INFO_EX, ImageInfo);
-	DEBUG("Image Info Size: %llu\n" , InImageInfo->ImageSize);
-
-	//Create first work item
-	//This work item creates the sha256 file hash
-	PSHA_WORK_ITEM sha_work_item = AllocMemory(TRUE, sizeof(SHA_WORK_ITEM));
-	if (sha_work_item == NULL)
-	{
-		goto Deny;
-	}
-	sha_work_item->FileObject = ex->FileObject;
-	sha_work_item->FullImageName = InFullImageName;
-	sha_work_item->Result = NULL;
-	sha_work_item->Allow = FALSE;
-	sha_work_item->Done = FALSE;
-	ExInitializeWorkItem(&sha_work_item->WorkItem, HashRoutine, sha_work_item);
-	ExQueueWorkItem(&sha_work_item->WorkItem, CriticalWorkQueue);
-
-	//Work item was queued - wait for its end
-	LARGE_INTEGER wait_large_integer;
-	wait_large_integer.QuadPart = -100000;
-	while (sha_work_item->Done == FALSE)
-	{
-		KeDelayExecutionThread(KernelMode, FALSE, &wait_large_integer);
-	}
-
-	//Was file a system root file?
-	//Note - this checked can be removed to increase security, by also checking system root files
-	if (sha_work_item->Allow == TRUE)
-	{
-		//They cannot be modified without admin privileges -> allow
-		goto Allow;
-	}
-	//Did we even get a result?
-	if (sha_work_item->Result == NULL)
-	{
-		//Something went wrong inside hash routine.
-		//This could be an indication of a driver bug and if it occurs often
-		//the driver should be checked for a bug
-		//In all cases, deny the load as we don't know the reason for failing
-		DEBUG("Something went wrong, deny load!");
-		goto Deny;
-	}
-
-	//Check if the given hash is in the whitelist
-	int length = sizeof(WHITELIST) / sizeof(WHITELIST[0]);
-	for (int i = 0; i < length; i++)
-	{
-		if (strcmp(sha_work_item->Result, WHITELIST[i]) == 0)
-		{
-			//There's a match found -> allow
-			DEBUG("EQUAL!\n");
+			//No - then do nothing
+			DEBUG("Not tracked: PID: %d ImageName: %wZ\n" , HandleToLong(InProcessId) , InFullImageName);
 			goto Allow;
 		}
-	}
+	Check:
+		//Is this a dll file?
+		if (InFullImageName->Length / 2 < wcslen(L"dll") || wcsncmp(&InFullImageName->Buffer[InFullImageName->Length / 2 - wcslen(L"dll")], L"dll", wcslen(L"dll")) != 0)
+		{
+			DEBUG("Not a DLL ImageName: %wZ\n" , InFullImageName);
+			//No - then do nothing
+			goto Allow;
+		}
 
-	//No match found -> deny
-	DEBUG("NOT EQUAL!\n");
-	//This statement is purposly not marked with the DEBUG macro
-	//In case the driver is running under release mode, the output of
-	//Dbgview.exe can be used to fill in a whitelist after observing a process start
-	//Most entries of the whitelist have been generated this way
-	DbgPrint("\"%s\", // %wZ\n", sha_work_item->Result, InFullImageName);
+		DEBUG("Malicious DLL Sample - PID: %d ImageName: %wZ\n" , HandleToLong(InProcessId) , InFullImageName);
 
-	FreeMemory(sha_work_item);
-	sha_work_item = NULL;
-	goto Deny;
+		//Was this DLL loaded from a file?
+		if (!InImageInfo->ExtendedInfoPresent)
+		{
+			//No, then we can't check its hash -> deny
+			goto Deny;
+		}
 
-Deny:
-	//So now we know that the DLL was NOT on the whitelist
-	//Start the patch work item
-	PPATCH_WORK_ITEM patch_work_item = AllocMemory(TRUE, sizeof(PATCH_WORK_ITEM));
-	if (patch_work_item == NULL)
-	{
+		//Get the extended information
+		IMAGE_INFO_EX* ex = CONTAINING_RECORD(InImageInfo, IMAGE_INFO_EX, ImageInfo);
+		DEBUG("Image Info Size: %llu\n" , InImageInfo->ImageSize);
+
+		//Create first work item
+		//This work item creates the sha256 file hash
+		PSHA_WORK_ITEM sha_work_item = AllocMemory(TRUE, sizeof(SHA_WORK_ITEM));
+		if (sha_work_item == NULL)
+		{
+			goto Deny;
+		}
+		sha_work_item->FileObject = ex->FileObject;
+		sha_work_item->FullImageName = InFullImageName;
+		sha_work_item->Result = NULL;
+		sha_work_item->Allow = FALSE;
+		sha_work_item->Done = FALSE;
+		ExInitializeWorkItem(&sha_work_item->WorkItem, HashRoutine, sha_work_item);
+		ExQueueWorkItem(&sha_work_item->WorkItem, CriticalWorkQueue);
+
+		//Work item was queued - wait for its end
+		LARGE_INTEGER wait_large_integer;
+		wait_large_integer.QuadPart = -100000;
+		while (sha_work_item->Done == FALSE)
+		{
+			KeDelayExecutionThread(KernelMode, FALSE, &wait_large_integer);
+		}
+
+		//Was file a system root file?
+		//Note - this checked can be removed to increase security, by also checking system root files
+		if (sha_work_item->Allow == TRUE)
+		{
+			//They cannot be modified without admin privileges -> allow
+			goto Allow;
+		}
+		//Did we even get a result?
+		if (sha_work_item->Result == NULL)
+		{
+			//Something went wrong inside hash routine.
+			//This could be an indication of a driver bug and if it occurs often
+			//the driver should be checked for a bug
+			//In all cases, deny the load as we don't know the reason for failing
+			DEBUG("Something went wrong, deny load!");
+			goto Deny;
+		}
+
+		//Check if the given hash is in the whitelist
+		int length = sizeof(WHITELIST) / sizeof(WHITELIST[0]);
+		for (int i = 0; i < length; i++)
+		{
+			if (strcmp(sha_work_item->Result, WHITELIST[i]) == 0)
+			{
+				//There's a match found -> allow
+				DEBUG("EQUAL!\n");
+				goto Allow;
+			}
+		}
+
+		//No match found -> deny
+		DEBUG("NOT EQUAL!\n");
+		//This statement is purposly not marked with the DEBUG macro
+		//In case the driver is running under release mode, the output of
+		//Dbgview.exe can be used to fill in a whitelist after observing a process start
+		//Most entries of the whitelist have been generated this way
+		DbgPrint("\"%s\", // %wZ\n", sha_work_item->Result, InFullImageName);
+
+		FreeMemory(sha_work_item);
+		sha_work_item = NULL;
 		goto Deny;
-	}
-	patch_work_item->ImageBase = InImageInfo->ImageBase;
-	patch_work_item->ImageSize = InImageInfo->ImageSize;
-	patch_work_item->ProcessId = InProcessId;
-	patch_work_item->Done = FALSE;
-	ExInitializeWorkItem(&patch_work_item->WorkItem, PatchRoutine, patch_work_item);
-	ExQueueWorkItem(&patch_work_item->WorkItem, CriticalWorkQueue);
-	
-	//Wait until patching is done
-	while (patch_work_item->Done == FALSE)
-	{
-		KeDelayExecutionThread(KernelMode, FALSE, &wait_large_integer);
-	}
-	FreeMemory(patch_work_item);
 
-	DEBUG("Deny!\n");
-Allow:
-	//Independent of deny / allow -> resume suspended process now
-	return;
+	Deny:
+		//So now we know that the DLL was NOT on the whitelist
+		//Start the patch work item
+		PPATCH_WORK_ITEM patch_work_item = AllocMemory(TRUE, sizeof(PATCH_WORK_ITEM));
+		if (patch_work_item == NULL)
+		{
+			goto Deny;
+		}
+		patch_work_item->ImageBase = InImageInfo->ImageBase;
+		patch_work_item->ImageSize = InImageInfo->ImageSize;
+		patch_work_item->ProcessId = InProcessId;
+		patch_work_item->Done = FALSE;
+		ExInitializeWorkItem(&patch_work_item->WorkItem, PatchRoutine, patch_work_item);
+		ExQueueWorkItem(&patch_work_item->WorkItem, CriticalWorkQueue);
+
+		//Wait until patching is done
+		while (patch_work_item->Done == FALSE)
+		{
+			KeDelayExecutionThread(KernelMode, FALSE, &wait_large_integer);
+		}
+		FreeMemory(patch_work_item);
+
+		DEBUG("Deny!\n");
+	Allow:
+		//Independent of deny / allow -> resume suspended process now
+		return;
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER)
+	{
+		DbgPrint("Exception is 0x%x\n", GetExceptionCode());
+		DbgPrint("Exception occurred with %wZ\n", InFullImageName);
+		return;
+	}
 }
 
 //This is the patch routine which will break the DLL file
@@ -164,12 +173,12 @@ void PatchRoutine(PVOID Parameter)
 	//Get the entryPoint of the dll
 	uint8* entryPointAbs = ReadPE(WorkItem->ImageBase);
 
-	DEBUG("DLL! %p\n", WorkItem->ImageBase);
-	DEBUG("Entry! %p\n", entryPointAbs);
+	DEBUG("DLL! %p\n" , WorkItem->ImageBase);
+	DEBUG("Entry! %p\n" , entryPointAbs);
 	//Patch the entry point function by writing a ret instruction
 	uint8 patch[] = {0xC3}; //ret
 	CopyMemory(entryPointAbs, patch, sizeof(patch));
-	
+
 	//Undo KeLowerIRQL to previous IRQL level from RtlWpOff
 	KeRaiseIrqlToDpcLevel();
 	//And enabled again
@@ -285,7 +294,7 @@ void HashRoutine(PVOID Parameter)
 			goto Fail;
 		}
 		DEBUG("File size is: %lu\n" , file_size.LowPart);
-		
+
 		//Allocate data buffer and read file into buffer
 		fileData = AllocMemory(TRUE, file_size.LowPart);
 		if (!NT_SUCCESS(Status = ReadFile(fileHandle, file_size.LowPart, fileData)))
